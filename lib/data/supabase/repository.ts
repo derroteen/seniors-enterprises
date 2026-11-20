@@ -32,7 +32,13 @@ export const supabaseRepository: StoreRepository = {
   async getOrderByNumber() {
     return notImplemented();
   },
+  async getOrders() {
+    return notImplemented();
+  },
   async updateOrderPayment() {
+    return notImplemented();
+  },
+  async updateOrderStatus() {
     return notImplemented();
   },
 };

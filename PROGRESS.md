@@ -15,6 +15,9 @@
   both values are editable in `lib/config/delivery.ts`.
 - Demo orders are stored in the browser's localStorage and can only be tracked
   in the same browser profile; this is temporary until the backend exists.
+- Mock admin catalog edits are saved only in the current browser and are not
+  synced to storefront server data; real catalog persistence belongs to the
+  backend phase.
 
 ## T1 — Rename + brand config
 
@@ -152,3 +155,25 @@
   message includes selected variant, price, and URL; complete a successful demo
   checkout and check the order-question link. Remove the variable and verify
   links are hidden and a development warning is logged.
+
+## T7 — Admin UI (mock, guarded)
+
+- Added `/admin` with dashboard metrics and low-stock variants, product
+  create/edit including variants and active/featured flags, category create/edit,
+  and order details/status updates.
+- Catalog edits are saved to browser localStorage and never call Supabase.
+  Existing demo orders are read and updated through the mock repository.
+- Added the visible “DEMO ADMIN: not secured” notice and a `/admin` layout guard
+  that calls `notFound()` in production until real authentication is added.
+- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, `app/admin/layout.tsx`,
+  `app/admin/page.tsx`, `components/admin/admin-dashboard.tsx`,
+  `lib/admin/mock-catalog-storage.ts`, `lib/data/repository.ts`,
+  `lib/data/mock/repository.ts`, and `lib/data/supabase/repository.ts`.
+- Validation: `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed;
+  `git diff --check` passed. Started the production build on port 3001 and
+  confirmed `/admin` returns HTTP 404.
+- To test manually: in development, open `/admin`; use each section to create
+  and edit a product with variant rows like `M,Navy,4`, create/edit categories,
+  and place a demo checkout order before changing its status. Refresh and verify
+  catalog changes persist in that browser. In production, `/admin` must show
+  the not-found page.

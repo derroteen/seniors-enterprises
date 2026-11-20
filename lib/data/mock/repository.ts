@@ -3,6 +3,7 @@ import type {
   CreateOrderInput,
   Order,
   OrderItem,
+  OrderStatus,
   Product,
   ProductFilters,
   ProductResults,
@@ -212,6 +213,10 @@ export const mockRepository: StoreRepository = {
     return readOrders().find((order) => order.order_number === orderNumber) ?? null;
   },
 
+  async getOrders() {
+    return [...readOrders()];
+  },
+
   async updateOrderPayment(orderNumber, update: UpdateOrderPaymentInput) {
     const orders = readOrders();
     const order = orders.find((entry) => entry.order_number === orderNumber);
@@ -231,5 +236,23 @@ export const mockRepository: StoreRepository = {
       ),
     );
     return updatedOrder;
+  },
+
+  async updateOrderStatus(orderNumber, status: OrderStatus) {
+    const orders = readOrders();
+    const updatedOrder = orders.find(
+      (entry) => entry.order_number === orderNumber,
+    );
+    if (!updatedOrder) {
+      return null;
+    }
+
+    const nextOrder = { ...updatedOrder, status };
+    writeOrders(
+      orders.map((entry) =>
+        entry.order_number === orderNumber ? nextOrder : entry,
+      ),
+    );
+    return nextOrder;
   },
 };
