@@ -7,6 +7,7 @@ import type {
   ProductResults,
   ProductSort,
   SearchProduct,
+  UpdateOrderPaymentInput,
 } from "@/lib/data/types";
 
 export interface StoreRepository {
@@ -23,4 +24,8 @@ export interface StoreRepository {
   getFilterOptions(): Promise<{ sizes: string[]; colors: string[] }>;
   createOrder(input: CreateOrderInput): Promise<Order>;
   getOrderByNumber(orderNumber: string): Promise<Order | null>;
+  updateOrderPayment(
+    orderNumber: string,
+    update: UpdateOrderPaymentInput,
+  ): Promise<Order | null>;
 }

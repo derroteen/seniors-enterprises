@@ -8,6 +8,7 @@ import type {
   ProductResults,
   ProductSort,
   SearchProduct,
+  UpdateOrderPaymentInput,
 } from "@/lib/data/types";
 import type { StoreRepository } from "@/lib/data/repository";
 import { mockCategories, mockProducts } from "@/lib/data/mock/products";
@@ -209,5 +210,26 @@ export const mockRepository: StoreRepository = {
 
   async getOrderByNumber(orderNumber) {
     return readOrders().find((order) => order.order_number === orderNumber) ?? null;
+  },
+
+  async updateOrderPayment(orderNumber, update: UpdateOrderPaymentInput) {
+    const orders = readOrders();
+    const order = orders.find((entry) => entry.order_number === orderNumber);
+    if (!order) {
+      return null;
+    }
+
+    const updatedOrder: Order = {
+      ...order,
+      payment_status: update.paymentStatus,
+      paystack_reference: update.paymentReference,
+      status: update.status,
+    };
+    writeOrders(
+      orders.map((entry) =>
+        entry.order_number === orderNumber ? updatedOrder : entry,
+      ),
+    );
+    return updatedOrder;
   },
 };

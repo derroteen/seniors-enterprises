@@ -11,6 +11,10 @@
 - Social metadata uses `NEXT_PUBLIC_SITE_URL`, then Vercel's `VERCEL_URL`, and
   falls back to localhost during local development; no deployment domain was
   supplied.
+- Demo delivery costs are KSh 350 within Nairobi County and KSh 650 elsewhere;
+  both values are editable in `lib/config/delivery.ts`.
+- Demo orders are stored in the browser's localStorage and can only be tracked
+  in the same browser profile; this is temporary until the backend exists.
 
 ## T1 — Rename + brand config
 
@@ -92,3 +96,37 @@
 - Browser verification: added the mock sneaker, opened the drawer, confirmed
   the variant/subtotal, and confirmed the serialized cart is stored in
   localStorage. The required type, lint, and production build checks passed.
+
+## T5 — Checkout (demo mode)
+
+- Added Zod-validated Kenyan contact and delivery forms, the complete county
+  list, and editable Nairobi/other-county delivery fees.
+- Added the payment provider interface, delayed mock success/failure flow, and
+  the unimplemented Paystack adapter. Demo checkout creates and updates orders
+  through the mock repository only; successful demo orders clear the cart.
+- Added `/checkout`, `/checkout/success`, `/checkout/failed`, and `/track-order`,
+  including the required no-real-payment notice and order lookup. Added a
+  tracking link to the footer.
+- Added `zod` as a direct runtime dependency because checkout validation imports
+  it; it was already installed in the project.
+- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, `package.json`,
+  `package-lock.json`, `components/store/site-footer.tsx`,
+  `components/store/checkout-form.tsx`,
+  `components/store/checkout-result.tsx`,
+  `components/store/order-lookup.tsx`,
+  `app/(store)/checkout/page.tsx`,
+  `app/(store)/checkout/success/page.tsx`,
+  `app/(store)/checkout/failed/page.tsx`,
+  `app/(store)/track-order/page.tsx`, `lib/checkout/schema.ts`,
+  `lib/config/delivery.ts`, `lib/payments/types.ts`, `lib/payments/mock.ts`,
+  `lib/payments/paystack.ts`, `lib/data/types.ts`,
+  `lib/data/repository.ts`, `lib/data/mock/repository.ts`, and
+  `lib/data/supabase/repository.ts`.
+- Validation: `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed.
+  `git diff --check` passed. Browser smoke testing could not complete because an
+  existing Next.js dev server on port 3000 timed out and reported a broken pipe.
+- To test manually: add a product to the cart, open `/checkout`, submit valid
+  contact/address details, and select either simulated payment outcome. Confirm
+  the demo banner, success/failure route, order number, and `/track-order`
+  lookup. Use a Kenyan number such as `0712345678` and test both Nairobi and
+  another county's delivery fee.

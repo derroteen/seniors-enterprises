@@ -115,6 +115,12 @@ export interface SearchProduct {
 
 export type NewOrderItem = Omit<OrderItem, "id" | "order_id">;
 
+export interface UpdateOrderPaymentInput {
+  paymentReference: string;
+  paymentStatus: PaymentStatus;
+  status: OrderStatus;
+}
+
 export type CreateOrderInput = Omit<
   Order,
   "id" | "order_number" | "created_at" | "items"

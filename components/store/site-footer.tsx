@@ -36,6 +36,11 @@ export function SiteFooter({ categories }: SiteFooterProps) {
                   Shop all
                 </Link>
               </li>
+              <li>
+                <Link href="/track-order" className="hover:text-primary">
+                  Track an order
+                </Link>
+              </li>
               {categories.map((category) => (
                 <li key={category.id}>
                   <Link
