@@ -8,6 +8,7 @@ import { CartIcon, CloseIcon, MenuIcon } from "@/components/store/icons";
 import { HeaderSearch } from "@/components/store/header-search";
 import { useCart } from "@/components/store/cart-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { BRAND } from "@/lib/brand";
 import type { CategoryRow } from "@/lib/store-data";
 import { Container } from "@/components/ui/container";
 
@@ -40,12 +41,12 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
 
           <Link
             href="/"
-            aria-label="Senior Enterprises home"
+            aria-label={`${BRAND.name} home`}
             className="relative block h-11 w-36 shrink-0 sm:w-40"
           >
             <Image
-              src="/brand/senior-enterprises-b.svg"
-              alt="Senior Enterprises"
+              src="/brand/logo-full-light.png"
+              alt={BRAND.name}
               fill
               sizes="160px"
               priority
@@ -53,8 +54,8 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
               className="object-contain object-left dark:hidden"
             />
             <Image
-              src="/brand/senior-enterprises-b-dark.svg"
-              alt="Senior Enterprises"
+              src="/brand/logo-full-dark.png"
+              alt={BRAND.name}
               fill
               sizes="160px"
               priority

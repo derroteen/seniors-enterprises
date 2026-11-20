@@ -13,6 +13,7 @@ import {
   getProducts,
   type ProductSort,
 } from "@/lib/store-data";
+import { BRAND } from "@/lib/brand";
 import {
   firstSearchParam,
   parsePageParam,
@@ -43,8 +44,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: category?.name ?? "Shop category",
     description: category
-      ? `Explore ${category.name} from Senior Enterprises.`
-      : "Explore the Senior Enterprises collection.",
+      ? `Explore ${category.name} from ${BRAND.name}.`
+      : `Explore the ${BRAND.name} collection.`,
   };
 }
 

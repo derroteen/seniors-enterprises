@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Input } from "@/components/ui/input";
 import { Section } from "@/components/ui/section";
+import { BRAND } from "@/lib/brand";
 
 const colorTokens = [
   { name: "Background", className: "bg-background", value: "var(--background)" },
@@ -24,7 +25,7 @@ export default function StyleguidePage() {
           <div className="flex flex-wrap items-center justify-between gap-5">
             <div>
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                Senior Enterprises
+                {BRAND.name}
               </p>
               <h1 className="font-display text-4xl font-semibold tracking-tight sm:text-5xl">
                 Design system

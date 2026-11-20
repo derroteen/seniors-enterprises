@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { getProductBySlug } from "@/lib/store-data";
+import { BRAND } from "@/lib/brand";
 import { createStoreSupabaseClient } from "@/lib/supabase/server";
 
 type ProductPageProps = {
@@ -28,7 +29,7 @@ export async function generateMetadata({
     title: product?.name ?? "Product",
     description:
       product?.description ??
-      "Explore thoughtfully selected everyday essentials from Senior Enterprises.",
+      `Explore thoughtfully selected everyday essentials from ${BRAND.name}.`,
   };
 }
 

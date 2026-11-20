@@ -5,6 +5,7 @@ import { ProductGrid } from "@/components/store/product-grid";
 import { TrustStrip } from "@/components/store/trust-strip";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
+import { BRAND } from "@/lib/brand";
 import {
   getCategories,
   getFeaturedProducts,
@@ -27,7 +28,7 @@ export default async function HomePage() {
           <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-                Senior Enterprises
+                {BRAND.name}
               </p>
               <h1 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-6xl">
                 Everyday essentials,{" "}
@@ -144,14 +145,14 @@ export default async function HomePage() {
         </Container>
       </Section>
 
-      <Section id="why-senior" surface className="border-y">
+      <Section id="why-seniors" surface className="border-y">
         <Container>
           <div className="mb-8 max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
               Shop with confidence
             </p>
             <h2 className="mt-2 font-display text-3xl font-semibold">
-              Why Senior Enterprises
+              Why {BRAND.name}
             </h2>
           </div>
           <TrustStrip />

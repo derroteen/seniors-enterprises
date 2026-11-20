@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,11 +20,10 @@ const playfairDisplay = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: "Senior Enterprises | Considered everyday essentials",
-    template: "%s | Senior Enterprises",
+    default: `${BRAND.name} | Considered everyday essentials`,
+    template: `%s | ${BRAND.name}`,
   },
-  description:
-    "Shop thoughtfully selected everyday essentials from Senior Enterprises.",
+  description: `Shop thoughtfully selected everyday essentials from ${BRAND.name}.`,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

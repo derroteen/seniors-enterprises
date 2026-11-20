@@ -6,6 +6,7 @@ import {
   InstagramIcon,
   TikTokIcon,
 } from "@/components/store/icons";
+import { BRAND } from "@/lib/brand";
 import type { CategoryRow } from "@/lib/store-data";
 import { Container } from "@/components/ui/container";
 
@@ -19,18 +20,18 @@ export function SiteFooter({ categories }: SiteFooterProps) {
       <Container>
         <div className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link href="/" aria-label="Senior Enterprises home">
+            <Link href="/" aria-label={`${BRAND.name} home`}>
               <Image
-                src="/brand/senior-enterprises-b.svg"
-                alt="Senior Enterprises"
+                src="/brand/logo-full-light.png"
+                alt={BRAND.name}
                 width={184}
                 height={42}
                 unoptimized
                 className="dark:hidden"
               />
               <Image
-                src="/brand/senior-enterprises-b-dark.svg"
-                alt="Senior Enterprises"
+                src="/brand/logo-full-dark.png"
+                alt={BRAND.name}
                 width={184}
                 height={42}
                 unoptimized
@@ -67,8 +68,8 @@ export function SiteFooter({ categories }: SiteFooterProps) {
             <h2 className="text-sm font-semibold">About</h2>
             <ul className="mt-4 grid gap-3 text-sm text-muted-foreground">
               <li>
-                <Link href="/#why-senior" className="hover:text-primary">
-                  Why Senior Enterprises
+                <Link href="/#why-seniors" className="hover:text-primary">
+                  Why {BRAND.name}
                 </Link>
               </li>
               <li>
@@ -119,7 +120,7 @@ export function SiteFooter({ categories }: SiteFooterProps) {
         </div>
 
         <div className="flex flex-col gap-2 border-t border-border py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Senior Enterprises</p>
+          <p>© {new Date().getFullYear()} {BRAND.name}</p>
           <p>Made for everyday living.</p>
         </div>
       </Container>

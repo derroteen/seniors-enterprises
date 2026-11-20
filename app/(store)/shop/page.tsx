@@ -12,6 +12,7 @@ import {
   getProducts,
   type ProductSort,
 } from "@/lib/store-data";
+import { BRAND } from "@/lib/brand";
 import {
   firstSearchParam,
   parsePageParam,
@@ -21,7 +22,7 @@ import { createStoreSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "Explore the full Senior Enterprises collection.",
+  description: `Explore the full ${BRAND.name} collection.`,
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
