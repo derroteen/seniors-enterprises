@@ -1,14 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { CartIcon, CloseIcon, MenuIcon } from "@/components/store/icons";
+import { CartDrawer } from "@/components/store/cart-drawer";
 import { HeaderSearch } from "@/components/store/header-search";
 import { Logo } from "@/components/store/logo";
-import { useCart } from "@/components/store/cart-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BRAND } from "@/lib/brand";
+import { getCartItemCount, useCartStore } from "@/lib/cart-store";
 import type { Category } from "@/lib/data/types";
 import { Container } from "@/components/ui/container";
 
@@ -18,7 +19,10 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ categories }: SiteHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { itemCount } = useCart();
+  const [cartOpen, setCartOpen] = useState(false);
+  const items = useCartStore((state) => state.items);
+  const itemCount = getCartItemCount(items);
+  const closeCart = useCallback(() => setCartOpen(false), []);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
@@ -69,16 +73,17 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
 
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0">
             <ThemeToggle />
-            <span
-              aria-label={`Cart has ${itemCount} ${itemCount === 1 ? "item" : "items"}; cart page coming soon`}
-              title="Cart page coming soon"
-              className="relative grid size-11 place-items-center rounded-lg border border-border bg-surface text-foreground"
+            <button
+              type="button"
+              onClick={() => setCartOpen(true)}
+              aria-label={`Open cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
+              className="relative grid size-11 place-items-center rounded-lg border border-border bg-surface text-foreground hover:bg-background"
             >
               <CartIcon className="size-5" />
               <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-semibold leading-5 text-accent-foreground">
                 {itemCount}
               </span>
-            </span>
+            </button>
           </div>
         </div>
 
@@ -110,6 +115,7 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
           </nav>
         ) : null}
       </Container>
+      <CartDrawer open={cartOpen} onClose={closeCart} />
     </header>
   );
 }

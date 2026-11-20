@@ -3,9 +3,9 @@
 import { useState } from "react";
 
 import { WhatsAppIcon } from "@/components/store/icons";
-import { useCart } from "@/components/store/cart-provider";
 import { Button } from "@/components/ui/button";
 import type { Product, ProductVariant } from "@/lib/data/types";
+import { useCartStore } from "@/lib/cart-store";
 import { formatKes, getDiscountPercent } from "@/lib/store-format";
 
 interface ProductPurchasePanelProps {
@@ -21,7 +21,7 @@ export function ProductPurchasePanel({
   const [selectedSize, setSelectedSize] = useState(firstVariant?.size ?? "");
   const [selectedColor, setSelectedColor] = useState(firstVariant?.color ?? "");
   const [cartMessage, setCartMessage] = useState("");
-  const { addToCart } = useCart();
+  const addItem = useCartStore((state) => state.addItem);
 
   const sizes = [...new Set(variants.map((variant) => variant.size))];
   const colors = variants.filter((variant) => variant.size === selectedSize);
@@ -52,14 +52,22 @@ export function ProductPurchasePanel({
       return;
     }
 
-    addToCart({
+    const added = addItem({
       color: selectedVariant.color,
+      imageUrl: product.images[0]?.url ?? null,
+      maxStock: selectedVariant.stock_quantity,
+      productId: product.id,
       productName: product.name,
+      productSlug: product.slug,
       size: selectedVariant.size,
       unitPriceKes: currentPrice,
       variantId: selectedVariant.id,
     });
-    setCartMessage(`${product.name} added to your bag.`);
+    setCartMessage(
+      added
+        ? `${product.name} added to your cart.`
+        : `Only ${selectedVariant.stock_quantity} available for this variant.`,
+    );
   }
 
   return (

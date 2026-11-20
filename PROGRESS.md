@@ -72,3 +72,23 @@
   `/shop`, `/shop/shoes`, `/shop/clothing`, a product slug, and search for
   “loafer”. Verified those routes return 200 and mock product/search data
   renders without Supabase credentials.
+
+## T4 — Cart
+
+- Replaced the ephemeral cart context with a Zustand store persisted to
+  localStorage. Storage reads/writes are guarded and hydration is deferred until
+  after the client mounts.
+- Added stock-limited add/change/remove operations, subtotal and count
+  selectors, a keyboard-dismissible cart drawer, and `/cart`.
+- Files changed: `package.json`, `package-lock.json`,
+  `lib/cart-store.ts`, `components/store/cart-provider.tsx`,
+  `components/store/cart-contents.tsx`, `components/store/cart-drawer.tsx`,
+  `components/store/cart-page.tsx`, `components/store/site-header.tsx`,
+  `components/store/product-purchase-panel.tsx`,
+  `app/(store)/cart/page.tsx`, `AGENT_TASKS.md`, `PROGRESS.md`.
+- To test: add a mock product variant to cart, open the drawer and `/cart`,
+  reload to verify persistence, adjust quantities up to stock, remove a line,
+  and verify subtotal/count updates.
+- Browser verification: added the mock sneaker, opened the drawer, confirmed
+  the variant/subtotal, and confirmed the serialized cart is stored in
+  localStorage. The required type, lint, and production build checks passed.
