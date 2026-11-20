@@ -6,6 +6,12 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000");
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -19,11 +25,33 @@ const playfairDisplay = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: `${BRAND.name} | Considered everyday essentials`,
     template: `%s | ${BRAND.name}`,
   },
   description: `Shop thoughtfully selected everyday essentials from ${BRAND.name}.`,
+  openGraph: {
+    type: "website",
+    locale: "en_KE",
+    siteName: BRAND.name,
+    title: `${BRAND.name} | Considered everyday essentials`,
+    description: `Shop thoughtfully selected everyday essentials from ${BRAND.name}.`,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: BRAND.name,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${BRAND.name} | Considered everyday essentials`,
+    description: `Shop thoughtfully selected everyday essentials from ${BRAND.name}.`,
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

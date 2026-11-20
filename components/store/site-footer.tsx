@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import {
@@ -6,6 +5,7 @@ import {
   InstagramIcon,
   TikTokIcon,
 } from "@/components/store/icons";
+import { Logo } from "@/components/store/logo";
 import { BRAND } from "@/lib/brand";
 import type { CategoryRow } from "@/lib/store-data";
 import { Container } from "@/components/ui/container";
@@ -21,22 +21,7 @@ export function SiteFooter({ categories }: SiteFooterProps) {
         <div className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" aria-label={`${BRAND.name} home`}>
-              <Image
-                src="/brand/logo-full-light.png"
-                alt={BRAND.name}
-                width={184}
-                height={42}
-                unoptimized
-                className="dark:hidden"
-              />
-              <Image
-                src="/brand/logo-full-dark.png"
-                alt={BRAND.name}
-                width={184}
-                height={42}
-                unoptimized
-                className="hidden dark:block"
-              />
+              <Logo variant="full" className="h-10 w-32" />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground">
               Thoughtful everyday essentials, selected with care.

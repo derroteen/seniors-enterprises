@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
 import { CartIcon, CloseIcon, MenuIcon } from "@/components/store/icons";
 import { HeaderSearch } from "@/components/store/header-search";
+import { Logo } from "@/components/store/logo";
 import { useCart } from "@/components/store/cart-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BRAND } from "@/lib/brand";
@@ -42,26 +42,9 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
           <Link
             href="/"
             aria-label={`${BRAND.name} home`}
-            className="relative block h-11 w-36 shrink-0 sm:w-40"
+            className="block rounded-sm"
           >
-            <Image
-              src="/brand/logo-full-light.png"
-              alt={BRAND.name}
-              fill
-              sizes="160px"
-              priority
-              unoptimized
-              className="object-contain object-left dark:hidden"
-            />
-            <Image
-              src="/brand/logo-full-dark.png"
-              alt={BRAND.name}
-              fill
-              sizes="160px"
-              priority
-              unoptimized
-              className="hidden object-contain object-left dark:block"
-            />
+            <Logo variant="full" priority />
           </Link>
 
           <nav

@@ -8,7 +8,9 @@
 
 ## Assumptions
 
-- None recorded yet.
+- Social metadata uses `NEXT_PUBLIC_SITE_URL`, then Vercel's `VERCEL_URL`, and
+  falls back to localhost during local development; no deployment domain was
+  supplied.
 
 ## T1 — Rename + brand config
 
@@ -26,3 +28,18 @@
   `components/store/site-footer.tsx`.
 - To test: run `npx tsc --noEmit`, `npm run lint`, `npm run build`, and verify
   rendered metadata and footer display “Seniors Enterprises”.
+
+## T2 — Logo + icons
+
+- Added the theme-aware `Logo` component using the supplied light/dark full and
+  mark PNGs; used it in the navbar (priority) and footer.
+- Added the PWA manifest and Open Graph/Twitter metadata using `/og-image.png`.
+- Resolved social image URLs using `NEXT_PUBLIC_SITE_URL`, `VERCEL_URL`, or a
+  localhost development fallback without assuming a live domain.
+- The public inventory contained the supplied PNG logos/icons only; no extra
+  generated logo or icon files were present to delete.
+- Files changed: `components/store/logo.tsx`, `components/store/site-header.tsx`,
+  `components/store/site-footer.tsx`, `app/manifest.ts`, `app/layout.tsx`,
+  `AGENT_TASKS.md`, `PROGRESS.md`.
+- To test: run all three required checks and inspect the manifest, logo in both
+  themes, and Open Graph/Twitter metadata.

@@ -1,7 +1,7 @@
 # Overnight Frontend Tasks
 
 - [x] T1. Rename brand references to “Seniors Enterprises”; add centralized brand config, `.env.example`, and rename report.
-- [ ] T2. Use the official logo and icon assets; add the responsive Logo component, manifest, and social metadata.
+- [x] T2. Use the official logo and icon assets; add the responsive Logo component, manifest, and social metadata.
 - [ ] T3. Replace direct Supabase page data calls with the repository interface and realistic local mock catalog.
 - [ ] T4. Add a persisted cart, cart drawer, and cart page with stock-aware quantities.
 - [ ] T5. Add demo checkout, validated delivery/contact forms, demo payment provider, order confirmation/failure, and tracking.
