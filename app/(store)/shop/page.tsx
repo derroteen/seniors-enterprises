@@ -5,20 +5,14 @@ import { ProductGrid } from "@/components/store/product-grid";
 import { ShopFilters } from "@/components/store/shop-filters";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
-import {
-  getCategories,
-  getCategoryBySlug,
-  getFilterOptions,
-  getProducts,
-  type ProductSort,
-} from "@/lib/store-data";
+import { dataRepository } from "@/lib/data";
+import type { ProductSort } from "@/lib/data/types";
 import { BRAND } from "@/lib/brand";
 import {
   firstSearchParam,
   parsePageParam,
   parsePriceParam,
 } from "@/lib/store-format";
-import { createStoreSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -40,28 +34,13 @@ export default async function ShopPage({
   searchParams: SearchParams;
 }) {
   const params = await searchParams;
-  const client = createStoreSupabaseClient();
-
-  if (!client) {
-    return (
-      <main>
-        <Section>
-          <Container>
-            <h1 className="font-display text-4xl font-semibold">Shop</h1>
-            <p className="mt-3 text-muted-foreground">
-              Products will appear here when the catalog is connected.
-            </p>
-          </Container>
-        </Section>
-      </main>
-    );
-  }
-
   const categorySlug = firstSearchParam(params.category);
   const [categories, filterOptions, selectedCategory] = await Promise.all([
-    getCategories(client),
-    getFilterOptions(client),
-    categorySlug ? getCategoryBySlug(client, categorySlug) : Promise.resolve(null),
+    dataRepository.getCategories(),
+    dataRepository.getFilterOptions(),
+    categorySlug
+      ? dataRepository.getCategoryBySlug(categorySlug)
+      : Promise.resolve(null),
   ]);
   const query = firstSearchParam(params.q)?.trim().slice(0, 100) ?? "";
   const size = firstSearchParam(params.size) ?? "";
@@ -73,18 +52,19 @@ export default async function ShopPage({
   const sort = parseSort(firstSearchParam(params.sort));
   const page = parsePageParam(firstSearchParam(params.page));
 
-  const { products, totalCount } = selectedCategory || !categorySlug
-    ? await getProducts(client, {
-        categoryId: selectedCategory?.id,
-        color,
-        maxPrice,
-        minPrice,
-        page,
-        query,
-        size,
-        sort,
-      })
-    : { products: [], totalCount: 0 };
+  const { products, totalCount } = await dataRepository.getProducts(
+    {
+      categoryId: selectedCategory?.id,
+      color,
+      maxPrice,
+      minPrice,
+      pageSize: 12,
+      query,
+      size,
+    },
+    sort,
+    page,
+  );
 
   const pageSize = 12;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));

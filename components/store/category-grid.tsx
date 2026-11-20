@@ -2,10 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ArrowRightIcon } from "@/components/store/icons";
-import type { CategoryRow } from "@/lib/store-data";
+import type { Category } from "@/lib/data/types";
 
 interface CategoryGridProps {
-  categories: CategoryRow[];
+  categories: Category[];
 }
 
 export function CategoryGrid({ categories }: CategoryGridProps) {

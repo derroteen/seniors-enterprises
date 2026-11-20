@@ -9,11 +9,11 @@ import { Logo } from "@/components/store/logo";
 import { useCart } from "@/components/store/cart-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BRAND } from "@/lib/brand";
-import type { CategoryRow } from "@/lib/store-data";
+import type { Category } from "@/lib/data/types";
 import { Container } from "@/components/ui/container";
 
 interface SiteHeaderProps {
-  categories: CategoryRow[];
+  categories: Category[];
 }
 
 export function SiteHeader({ categories }: SiteHeaderProps) {

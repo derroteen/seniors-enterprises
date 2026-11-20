@@ -2,11 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import type { Product } from "@/lib/data/types";
 import { formatKes, getDiscountPercent } from "@/lib/store-format";
-import type { StoreProduct } from "@/lib/store-data";
 
 interface ProductCardProps {
-  product: StoreProduct;
+  product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {

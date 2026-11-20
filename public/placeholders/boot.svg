@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800" role="img" aria-labelledby="title">
+  <title id="title">Seniors Enterprises boot placeholder</title>
+  <rect width="640" height="800" rx="40" fill="#FBF8F1"/>
+  <circle cx="480" cy="149" r="120" fill="#1D4ED8" opacity=".1"/>
+  <path d="M254 178h154l-6 319c-1 42 21 73 58 99l79 56c44 31 70 75 74 129l2 28H81c-25 0-45-21-43-46l4-57c4-48 31-87 72-110l83-46c38-21 59-59 58-102l-1-270Z" fill="#0B1F4B"/>
+  <path d="M254 178h154l-3 204H253l1-204Z" fill="#1D4ED8"/>
+  <path d="M112 613c94 32 235 43 386 13l47 33c44 31 70 75 74 129l2 28H81c-25 0-45-21-43-46l4-57c3-39 27-75 70-100Z" fill="#C9A227"/>
+  <path d="M280 222v108m45-108v108m44-108v108" stroke="#FBF8F1" stroke-linecap="round" stroke-width="11"/>
+</svg>

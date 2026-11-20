@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { CategoryRow, ProductSort } from "@/lib/store-data";
+import type { Category, ProductSort } from "@/lib/data/types";
 
 export interface ShopFilterValues {
   color: string;
@@ -13,7 +13,7 @@ export interface ShopFilterValues {
 
 interface ShopFiltersProps {
   activeCategorySlug: string | null;
-  categories: CategoryRow[];
+  categories: Category[];
   formPath: string;
   values: ShopFilterValues;
   colors: string[];

@@ -7,9 +7,8 @@ import { ProductPurchasePanel } from "@/components/store/product-purchase-panel"
 import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
-import { getProductBySlug } from "@/lib/store-data";
+import { dataRepository } from "@/lib/data";
 import { BRAND } from "@/lib/brand";
-import { createStoreSupabaseClient } from "@/lib/supabase/server";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -19,12 +18,7 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const client = createStoreSupabaseClient();
-  if (!client) {
-    return { title: "Product" };
-  }
-
-  const product = await getProductBySlug(client, slug);
+  const product = await dataRepository.getProductBySlug(slug);
   return {
     title: product?.name ?? "Product",
     description:
@@ -35,24 +29,7 @@ export async function generateMetadata({
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const client = createStoreSupabaseClient();
-
-  if (!client) {
-    return (
-      <main>
-        <Section>
-          <Container>
-            <h1 className="font-display text-4xl font-semibold">Product details</h1>
-            <p className="mt-3 text-muted-foreground">
-              Product details will appear when the catalog is connected.
-            </p>
-          </Container>
-        </Section>
-      </main>
-    );
-  }
-
-  const product = await getProductBySlug(client, slug);
+  const product = await dataRepository.getProductBySlug(slug);
   if (!product) {
     notFound();
   }

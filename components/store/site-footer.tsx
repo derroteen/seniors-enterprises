@@ -7,11 +7,11 @@ import {
 } from "@/components/store/icons";
 import { Logo } from "@/components/store/logo";
 import { BRAND } from "@/lib/brand";
-import type { CategoryRow } from "@/lib/store-data";
+import type { Category } from "@/lib/data/types";
 import { Container } from "@/components/ui/container";
 
 interface SiteFooterProps {
-  categories: CategoryRow[];
+  categories: Category[];
 }
 
 export function SiteFooter({ categories }: SiteFooterProps) {

@@ -1,8 +1,8 @@
-import type { StoreProduct } from "@/lib/store-data";
 import { ProductCard } from "@/components/store/product-card";
+import type { Product } from "@/lib/data/types";
 
 interface ProductGridProps {
-  products: StoreProduct[];
+  products: Product[];
 }
 
 export function ProductGrid({ products }: ProductGridProps) {

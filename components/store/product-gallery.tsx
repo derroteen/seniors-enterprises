@@ -4,10 +4,10 @@ import Image from "next/image";
 import { useRef, useState, type TouchEvent } from "react";
 
 import { ChevronLeftIcon, ChevronRightIcon, ZoomIcon } from "@/components/store/icons";
-import type { ProductImageRow } from "@/lib/store-data";
+import type { ProductImage } from "@/lib/data/types";
 
 interface ProductGalleryProps {
-  images: ProductImageRow[];
+  images: ProductImage[];
   productName: string;
 }
 

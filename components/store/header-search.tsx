@@ -7,7 +7,7 @@ import { useEffect, useId, useState } from "react";
 
 import { SearchIcon } from "@/components/store/icons";
 import { formatKes } from "@/lib/store-format";
-import type { SearchSuggestion } from "@/lib/store-data";
+import type { SearchProduct } from "@/lib/data/types";
 
 type SearchState = "idle" | "loading" | "ready" | "unavailable";
 
@@ -19,7 +19,7 @@ export function HeaderSearch({ className = "" }: HeaderSearchProps) {
   const router = useRouter();
   const inputId = useId();
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<SearchProduct[]>([]);
   const [searchState, setSearchState] = useState<SearchState>("idle");
   const [searchMessage, setSearchMessage] = useState("");
 
@@ -40,7 +40,7 @@ export function HeaderSearch({ className = "" }: HeaderSearchProps) {
         );
         const payload = (await response.json()) as {
           message?: string;
-          suggestions?: SearchSuggestion[];
+          suggestions?: SearchProduct[];
         };
         if (!response.ok) {
           throw new Error(payload.message ?? "Search is temporarily unavailable.");

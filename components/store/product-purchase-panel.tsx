@@ -5,12 +5,12 @@ import { useState } from "react";
 import { WhatsAppIcon } from "@/components/store/icons";
 import { useCart } from "@/components/store/cart-provider";
 import { Button } from "@/components/ui/button";
+import type { Product, ProductVariant } from "@/lib/data/types";
 import { formatKes, getDiscountPercent } from "@/lib/store-format";
-import type { ProductRow, ProductVariantRow } from "@/lib/store-data";
 
 interface ProductPurchasePanelProps {
-  product: ProductRow;
-  variants: ProductVariantRow[];
+  product: Product;
+  variants: ProductVariant[];
 }
 
 export function ProductPurchasePanel({

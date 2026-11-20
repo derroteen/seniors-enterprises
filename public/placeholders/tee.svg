@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800" role="img" aria-labelledby="title">
+  <title id="title">Seniors Enterprises tee placeholder</title>
+  <rect width="640" height="800" rx="40" fill="#FBF8F1"/>
+  <circle cx="503" cy="148" r="112" fill="#C9A227" opacity=".16"/>
+  <path d="m241 178-104 38L42 367l108 81 59-61v282h222V387l59 61 108-81-95-151-104-38c-18 46-46 70-84 70s-66-24-84-70Z" fill="#0B1F4B"/>
+  <path d="M242 178c18 46 46 70 84 70s66-24 84-70" fill="none" stroke="#C9A227" stroke-linecap="round" stroke-width="15"/>
+  <path d="M228 553h180" stroke="#1D4ED8" stroke-linecap="round" stroke-width="12"/>
+</svg>

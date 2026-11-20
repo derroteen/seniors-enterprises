@@ -6,20 +6,14 @@ import { ProductGrid } from "@/components/store/product-grid";
 import { ShopFilters } from "@/components/store/shop-filters";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
-import {
-  getCategories,
-  getCategoryBySlug,
-  getFilterOptions,
-  getProducts,
-  type ProductSort,
-} from "@/lib/store-data";
+import { dataRepository } from "@/lib/data";
+import type { ProductSort } from "@/lib/data/types";
 import { BRAND } from "@/lib/brand";
 import {
   firstSearchParam,
   parsePageParam,
   parsePriceParam,
 } from "@/lib/store-format";
-import { createStoreSupabaseClient } from "@/lib/supabase/server";
 
 type PageProps = {
   params: Promise<{ category: string }>;
@@ -35,12 +29,7 @@ function parseSort(value: string | undefined): ProductSort {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category: categorySlug } = await params;
-  const client = createStoreSupabaseClient();
-  if (!client) {
-    return { title: "Shop category" };
-  }
-
-  const category = await getCategoryBySlug(client, categorySlug);
+  const category = await dataRepository.getCategoryBySlug(categorySlug);
   return {
     title: category?.name ?? "Shop category",
     description: category
@@ -57,31 +46,14 @@ export default async function CategoryPage({
     params,
     searchParams,
   ]);
-  const client = createStoreSupabaseClient();
-
-  if (!client) {
-    return (
-      <main>
-        <Section>
-          <Container>
-            <h1 className="font-display text-4xl font-semibold">Shop category</h1>
-            <p className="mt-3 text-muted-foreground">
-              Category products will appear when the catalog is connected.
-            </p>
-          </Container>
-        </Section>
-      </main>
-    );
-  }
-
-  const category = await getCategoryBySlug(client, categorySlug);
+  const category = await dataRepository.getCategoryBySlug(categorySlug);
   if (!category) {
     notFound();
   }
 
   const [categories, filterOptions] = await Promise.all([
-    getCategories(client),
-    getFilterOptions(client),
+    dataRepository.getCategories(),
+    dataRepository.getFilterOptions(),
   ]);
   const query = firstSearchParam(queryParams.q)?.trim().slice(0, 100) ?? "";
   const size = firstSearchParam(queryParams.size) ?? "";
@@ -90,16 +62,19 @@ export default async function CategoryPage({
   const maxPriceValue = firstSearchParam(queryParams.maxPrice);
   const sort = parseSort(firstSearchParam(queryParams.sort));
   const page = parsePageParam(firstSearchParam(queryParams.page));
-  const { products, totalCount } = await getProducts(client, {
-    categoryId: category.id,
-    color,
-    maxPrice: parsePriceParam(maxPriceValue),
-    minPrice: parsePriceParam(minPriceValue),
-    page,
-    query,
-    size,
+  const { products, totalCount } = await dataRepository.getProducts(
+    {
+      categoryId: category.id,
+      color,
+      maxPrice: parsePriceParam(maxPriceValue),
+      minPrice: parsePriceParam(minPriceValue),
+      pageSize: 12,
+      query,
+      size,
+    },
     sort,
-  });
+    page,
+  );
   const pageSize = 12;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 

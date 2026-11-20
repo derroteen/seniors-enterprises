@@ -43,3 +43,32 @@
   `AGENT_TASKS.md`, `PROGRESS.md`.
 - To test: run all three required checks and inspect the manifest, logo in both
   themes, and Open Graph/Twitter metadata.
+
+## T3 — Data layer with mock data
+
+- Added the shared database-shaped model and repository interface, mock and
+  unimplemented Supabase adapters, and the `NEXT_PUBLIC_DATA_SOURCE` switch
+  (defaults to `mock`). Added the setting to `.env.example`.
+- Removed direct Supabase queries from storefront routes and search; removed
+  the old query helper and generated-client type files.
+- Added exactly 24 unique mock products (12 shoes, 12 clothing), size/color
+  variants including out-of-stock combinations, and local SVG placeholders.
+- Files changed: `.env.example`, `AGENT_TASKS.md`, `PROGRESS.md`,
+  `app/(store)/layout.tsx`, `app/(store)/page.tsx`,
+  `app/(store)/shop/page.tsx`, `app/(store)/shop/[category]/page.tsx`,
+  `app/(store)/product/[slug]/page.tsx`, `app/api/search/route.ts`,
+  `components/store/category-grid.tsx`, `components/store/header-search.tsx`,
+  `components/store/product-card.tsx`, `components/store/product-gallery.tsx`,
+  `components/store/product-grid.tsx`,
+  `components/store/product-purchase-panel.tsx`,
+  `components/store/shop-filters.tsx`, `components/store/site-footer.tsx`,
+  `components/store/site-header.tsx`, `lib/data/index.ts`,
+  `lib/data/types.ts`, `lib/data/repository.ts`,
+  `lib/data/mock/products.ts`, `lib/data/mock/repository.ts`,
+  `lib/data/supabase/repository.ts`, eleven SVGs in `public/placeholders/`;
+  deleted obsolete `lib/store-data.ts`, `lib/supabase/server.ts`, and
+  `types/database.ts`.
+- To test: set `NEXT_PUBLIC_DATA_SOURCE=mock` or leave it unset, then open
+  `/shop`, `/shop/shoes`, `/shop/clothing`, a product slug, and search for
+  “loafer”. Verified those routes return 200 and mock product/search data
+  renders without Supabase credentials.

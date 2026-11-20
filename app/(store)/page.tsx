@@ -6,20 +6,13 @@ import { TrustStrip } from "@/components/store/trust-strip";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { BRAND } from "@/lib/brand";
-import {
-  getCategories,
-  getFeaturedProducts,
-} from "@/lib/store-data";
-import { createStoreSupabaseClient } from "@/lib/supabase/server";
+import { dataRepository } from "@/lib/data";
 
 export default async function HomePage() {
-  const client = createStoreSupabaseClient();
-  const [categories, featuredProducts] = client
-    ? await Promise.all([
-        getCategories(client),
-        getFeaturedProducts(client, 4),
-      ])
-    : [[], []];
+  const [categories, featuredProducts] = await Promise.all([
+    dataRepository.getCategories(),
+    dataRepository.getFeaturedProducts(4),
+  ]);
 
   return (
     <main>
@@ -135,13 +128,7 @@ export default async function HomePage() {
               Shop all products
             </Link>
           </div>
-          {client ? (
-            <ProductGrid products={featuredProducts} />
-          ) : (
-            <div className="rounded-2xl border border-dashed border-border bg-surface px-6 py-10 text-center text-sm text-muted-foreground">
-              Connect the catalog to see featured products here.
-            </div>
-          )}
+          <ProductGrid products={featuredProducts} />
         </Container>
       </Section>
 

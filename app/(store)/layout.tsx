@@ -4,24 +4,19 @@ import { CartProvider } from "@/components/store/cart-provider";
 import { SiteFooter } from "@/components/store/site-footer";
 import { SiteHeader } from "@/components/store/site-header";
 import { StoreNotice } from "@/components/store/store-notice";
-import { getCategories } from "@/lib/store-data";
-import {
-  createStoreSupabaseClient,
-  isSupabaseConfigured,
-} from "@/lib/supabase/server";
+import { dataRepository } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export default async function StoreLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
-  const client = createStoreSupabaseClient();
-  const categories = client ? await getCategories(client) : [];
+  const categories = await dataRepository.getCategories();
 
   return (
     <CartProvider>
       <SiteHeader categories={categories} />
-      {!isSupabaseConfigured() ? <StoreNotice /> : null}
+      {process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase" ? <StoreNotice /> : null}
       {children}
       <SiteFooter categories={categories} />
     </CartProvider>

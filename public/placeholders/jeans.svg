@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="800" viewBox="0 0 640 800" role="img" aria-labelledby="title">
+  <title id="title">Seniors Enterprises jeans placeholder</title>
+  <rect width="640" height="800" rx="40" fill="#FBF8F1"/>
+  <circle cx="500" cy="145" r="112" fill="#C9A227" opacity=".16"/>
+  <path d="M194 110h252l38 600H345l-25-271-25 271H156l38-600Z" fill="#1D4ED8"/>
+  <path d="M194 110h252l11 170H183l11-170Z" fill="#0B1F4B"/>
+  <path d="M320 111v328" stroke="#C9A227" stroke-width="9"/>
+  <path d="M205 132h95m72 0h62M183 280h274" stroke="#FBF8F1" stroke-linecap="round" stroke-width="8" opacity=".8"/>
+  <path d="m221 323 94 96m104-96-94 96" stroke="#0B1F4B" stroke-linecap="round" stroke-width="8" opacity=".75"/>
+</svg>
