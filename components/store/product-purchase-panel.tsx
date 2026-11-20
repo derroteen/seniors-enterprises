@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Product, ProductVariant } from "@/lib/data/types";
 import { useCartStore } from "@/lib/cart-store";
 import { formatKes, getDiscountPercent } from "@/lib/store-format";
+import { getWhatsAppUrl, isWhatsAppConfigured } from "@/lib/whatsapp";
 
 interface ProductPurchasePanelProps {
   product: Product;
@@ -22,6 +23,7 @@ export function ProductPurchasePanel({
   const [selectedColor, setSelectedColor] = useState(firstVariant?.color ?? "");
   const [cartMessage, setCartMessage] = useState("");
   const addItem = useCartStore((state) => state.addItem);
+  const hasWhatsAppContact = isWhatsAppConfigured();
 
   const sizes = [...new Set(variants.map((variant) => variant.size))];
   const colors = variants.filter((variant) => variant.size === selectedSize);
@@ -68,6 +70,24 @@ export function ProductPurchasePanel({
         ? `${product.name} added to your cart.`
         : `Only ${selectedVariant.stock_quantity} available for this variant.`,
     );
+  }
+
+  function askAboutProduct() {
+    if (!selectedVariant) {
+      return;
+    }
+
+    const message = [
+      `Hello, I'm interested in ${product.name}.`,
+      `Size: ${selectedVariant.size}`,
+      `Color: ${selectedVariant.color}`,
+      `Price: ${formatKes(currentPrice)}`,
+      `Product: ${window.location.href}`,
+    ].join("\n");
+    const url = getWhatsAppUrl(message);
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
   }
 
   return (
@@ -193,16 +213,17 @@ export function ProductPurchasePanel({
         >
           {isInStock ? "Add to cart" : "Out of stock"}
         </Button>
-        <Button
-          variant="outline"
-          size="lg"
-          disabled
-          title="WhatsApp contact will be configured later"
-          className="w-full"
-        >
-          <WhatsAppIcon className="mr-2 size-5" />
-          Ask about this product on WhatsApp
-        </Button>
+        {hasWhatsAppContact ? (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={askAboutProduct}
+            className="w-full"
+          >
+            <WhatsAppIcon className="mr-2 size-5" />
+            Ask about this product on WhatsApp
+          </Button>
+        ) : null}
         <p role="status" aria-live="polite" className="min-h-5 text-center text-sm text-primary">
           {cartMessage}
         </p>

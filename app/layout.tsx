@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import type { ReactNode } from "react";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { WhatsAppFloatingButton } from "@/components/store/whatsapp-floating-button";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body className={`${inter.variable} ${playfairDisplay.variable} min-h-screen`}>
         <ThemeProvider>
           {children}
+          <WhatsAppFloatingButton />
         </ThemeProvider>
       </body>
     </html>

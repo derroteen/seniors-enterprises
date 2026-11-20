@@ -130,3 +130,25 @@
   the demo banner, success/failure route, order number, and `/track-order`
   lookup. Use a Kenyan number such as `0712345678` and test both Nairobi and
   another county's delivery fee.
+
+## T6 — WhatsApp
+
+- Added a shared URL helper using only `BRAND.whatsappNumber`; invalid or missing
+  values hide the links and produce a single development warning.
+- Added the floating WhatsApp button globally, positioned above mobile bottom
+  controls and behind the cart drawer.
+- Added a product question action that includes product name, selected size and
+  color, current price, and the current product page URL. Added an order
+  question link on successful checkout with the order number in its message.
+- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, `app/layout.tsx`,
+  `components/store/whatsapp-floating-button.tsx`,
+  `components/store/product-purchase-panel.tsx`,
+  `components/store/checkout-result.tsx`, and `lib/whatsapp.ts`.
+- Validation: `npx tsc --noEmit`, `npm run lint`, and `npm run build` passed;
+  `git diff --check` passed.
+- To test manually: set `NEXT_PUBLIC_WHATSAPP_NUMBER` in local development to a
+  test number in international digits, then open any page and confirm the
+  floating button opens WhatsApp. Open a product and confirm its question
+  message includes selected variant, price, and URL; complete a successful demo
+  checkout and check the order-question link. Remove the variable and verify
+  links are hidden and a development warning is logged.

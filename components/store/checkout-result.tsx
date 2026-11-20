@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { dataRepository } from "@/lib/data";
 import type { Order } from "@/lib/data/types";
 import { formatKes } from "@/lib/store-format";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 
@@ -44,6 +45,12 @@ export function CheckoutResult({ orderNumber, outcome }: CheckoutResultProps) {
   }, [orderNumber]);
 
   const succeeded = outcome === "success";
+  const orderWhatsAppUrl =
+    succeeded && orderNumber
+      ? getWhatsAppUrl(
+          `Hello, I have a question about my order ${orderNumber}.`,
+        )
+      : null;
 
   return (
     <Section>
@@ -97,6 +104,16 @@ export function CheckoutResult({ orderNumber, outcome }: CheckoutResultProps) {
                 >
                   Track this order
                 </Link>
+              ) : null}
+              {orderWhatsAppUrl ? (
+                <a
+                  href={orderWhatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center rounded-lg border border-border px-5 text-sm font-semibold hover:bg-background"
+                >
+                  Questions about your order?
+                </a>
               ) : null}
               <Link
                 href="/shop"
