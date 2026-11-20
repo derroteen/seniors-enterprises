@@ -2,7 +2,7 @@ import { Container } from "@/components/ui/container";
 
 export default function StoreLoading() {
   return (
-    <main aria-label="Loading store" className="py-12 sm:py-16">
+    <main aria-label="Loading store" aria-busy="true" className="py-12 sm:py-16">
       <Container>
         <div className="h-10 w-64 animate-pulse rounded-lg bg-muted/30" />
         <div className="mt-4 h-5 w-96 max-w-full animate-pulse rounded bg-muted/20" />

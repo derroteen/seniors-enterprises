@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CategoryGrid } from "@/components/store/category-grid";
@@ -7,6 +8,11 @@ import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { BRAND } from "@/lib/brand";
 import { dataRepository } from "@/lib/data";
+
+export const metadata: Metadata = {
+  title: "Considered everyday essentials",
+  description: `Shop thoughtful everyday essentials from ${BRAND.name}.`,
+};
 
 export default async function HomePage() {
   const [categories, featuredProducts] = await Promise.all([

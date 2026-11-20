@@ -5,13 +5,8 @@ import type { ReactNode } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { WhatsAppFloatingButton } from "@/components/store/whatsapp-floating-button";
 import { BRAND } from "@/lib/brand";
+import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
-
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:3000");
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,7 +21,7 @@ const playfairDisplay = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: `${BRAND.name} | Considered everyday essentials`,
     template: `%s | ${BRAND.name}`,

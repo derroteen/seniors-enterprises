@@ -18,6 +18,7 @@
 - Mock admin catalog edits are saved only in the current browser and are not
   synced to storefront server data; real catalog persistence belongs to the
   backend phase.
+- The sitemap uses the mock catalog until the backend data source is connected.
 
 ## T1 — Rename + brand config
 
@@ -177,3 +178,39 @@
   and place a demo checkout order before changing its status. Refresh and verify
   catalog changes persist in that browser. In production, `/admin` must show
   the not-found page.
+
+## T8 — Polish and SEO
+
+- Added branded global not-found and error pages, improved store error copy, and
+  marked existing loading skeletons as busy for assistive technology. Existing
+  product/cart empty states were retained.
+- Added clearly labeled Privacy, Terms, Returns, and Delivery placeholder pages
+  and footer links. Added explicit home/styleguide metadata, a site URL helper,
+  dynamic product/category sitemap entries, robots rules, and escaped Product
+  JSON-LD.
+- Hid the theme-toggle text label on narrow screens while retaining its
+  accessible state label; this fixed header overflow at 360px.
+- WCAG contrast calculations passed AA for light/dark body and muted text,
+  primary buttons, and gold buttons. Production browser checks found no
+  horizontal overflow on home, shop, product, cart, checkout, tracking, and
+  legal routes at 360px, 768px, and 1280px. Verified dark token colors and
+  parsed the Product JSON-LD for a mock product.
+- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, `app/layout.tsx`,
+  `app/error.tsx`, `app/not-found.tsx`, `app/robots.ts`, `app/sitemap.ts`,
+  `app/(store)/error.tsx`, `app/(store)/loading.tsx`,
+  `app/(store)/page.tsx`, `app/(store)/product/[slug]/page.tsx`,
+  `app/(store)/product/[slug]/loading.tsx`,
+  `app/(store)/shop/loading.tsx`, `app/(store)/privacy/page.tsx`,
+  `app/(store)/terms/page.tsx`, `app/(store)/returns/page.tsx`,
+  `app/(store)/delivery/page.tsx`, `app/styleguide/page.tsx`,
+  `components/store/site-footer.tsx`,
+  `components/store/legal-placeholder.tsx`, `components/theme-toggle.tsx`,
+  and `lib/site-url.ts`.
+- Validation: `npx tsc --noEmit`, `npm run lint`, `npm run build`, and
+  `git diff --check` passed. Production smoke checks returned 404 for `/admin`
+  and an unknown route, and 200 for `/robots.txt`, `/sitemap.xml`, and
+  `/delivery`.
+- To test manually: inspect light/dark themes on `/`, `/shop`, a product, and
+  `/checkout`; resize the browser to 360px, 768px, and 1280px; verify legal
+  placeholder labels; inspect `/robots.txt`, `/sitemap.xml`, and a product
+  page's `application/ld+json` script.

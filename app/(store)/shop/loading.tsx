@@ -2,7 +2,11 @@ import { Container } from "@/components/ui/container";
 
 export default function ShopLoading() {
   return (
-    <main className="py-12 sm:py-16" aria-label="Loading products">
+    <main
+      className="py-12 sm:py-16"
+      aria-label="Loading products"
+      aria-busy="true"
+    >
       <Container>
         <div className="h-10 w-56 animate-pulse rounded-lg bg-muted/30" />
         <div className="mt-6 h-32 animate-pulse rounded-2xl bg-muted/20" />

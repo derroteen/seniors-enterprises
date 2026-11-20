@@ -9,6 +9,7 @@ import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { dataRepository } from "@/lib/data";
 import { BRAND } from "@/lib/brand";
+import { getSiteUrl } from "@/lib/site-url";
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -34,8 +35,53 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
+  const availableVariants = product.variants.filter(
+    (variant) => variant.stock_quantity > 0,
+  );
+  const availablePrices = availableVariants.map(
+    (variant) => variant.price_override_kes ?? product.base_price_kes,
+  );
+  const productUrl = new URL(`/product/${product.slug}`, getSiteUrl()).toString();
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description ?? undefined,
+    image: product.images.map((image) =>
+      new URL(image.url, getSiteUrl()).toString(),
+    ),
+    sku: product.variants[0]?.sku,
+    brand: {
+      "@type": "Brand",
+      name: BRAND.name,
+    },
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: BRAND.currency,
+      lowPrice: availablePrices.length
+        ? Math.min(...availablePrices)
+        : product.base_price_kes,
+      highPrice: availablePrices.length
+        ? Math.max(...availablePrices)
+        : product.base_price_kes,
+      offerCount: availableVariants.length,
+      availability: availableVariants.length
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      url: productUrl,
+    },
+  };
+  const serializedProductJsonLd = JSON.stringify(productJsonLd).replace(
+    /</g,
+    "\\u003c",
+  );
+
   return (
     <main>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializedProductJsonLd }}
+      />
       <Section className="py-8 sm:py-12">
         <Container>
           <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">

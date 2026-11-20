@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -5,6 +7,11 @@ import { Container } from "@/components/ui/container";
 import { Input } from "@/components/ui/input";
 import { Section } from "@/components/ui/section";
 import { BRAND } from "@/lib/brand";
+
+export const metadata: Metadata = {
+  title: "Design guide",
+  description: `A preview of the colors and typography used by ${BRAND.name}.`,
+};
 
 const colorTokens = [
   { name: "Background", className: "bg-background", value: "var(--background)" },

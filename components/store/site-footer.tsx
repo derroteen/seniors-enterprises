@@ -18,7 +18,7 @@ export function SiteFooter({ categories }: SiteFooterProps) {
   return (
     <footer className="border-t border-border bg-surface">
       <Container>
-        <div className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-5">
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" aria-label={`${BRAND.name} home`}>
               <Logo variant="full" className="h-10 w-32" />
@@ -72,6 +72,16 @@ export function SiteFooter({ categories }: SiteFooterProps) {
                   Design guide
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          <div>
+            <h2 className="text-sm font-semibold">Customer care</h2>
+            <ul className="mt-4 grid gap-3 text-sm text-muted-foreground">
+              <li><Link href="/privacy" className="hover:text-primary">Privacy</Link></li>
+              <li><Link href="/terms" className="hover:text-primary">Terms</Link></li>
+              <li><Link href="/returns" className="hover:text-primary">Returns</Link></li>
+              <li><Link href="/delivery" className="hover:text-primary">Delivery</Link></li>
             </ul>
           </div>
 

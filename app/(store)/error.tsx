@@ -24,8 +24,7 @@ export default function StoreError({
             We couldn’t load the store
           </h1>
           <p className="mt-3 text-muted-foreground">
-            Please try again. If the problem continues, check the Supabase
-            connection and server logs.
+            Please try again. If the problem continues, return to the shop later.
           </p>
           <Button onClick={reset} className="mt-6">
             Try again

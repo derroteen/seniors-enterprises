@@ -2,7 +2,11 @@ import { Container } from "@/components/ui/container";
 
 export default function ProductLoading() {
   return (
-    <main className="py-10 sm:py-14" aria-label="Loading product">
+    <main
+      className="py-10 sm:py-14"
+      aria-label="Loading product"
+      aria-busy="true"
+    >
       <Container>
         <div className="grid gap-8 md:grid-cols-2">
           <div className="aspect-[4/5] animate-pulse rounded-2xl bg-muted/20" />
