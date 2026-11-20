@@ -214,3 +214,13 @@
   `/checkout`; resize the browser to 360px, 768px, and 1280px; verify legal
   placeholder labels; inspect `/robots.txt`, `/sitemap.xml`, and a product
   page's `application/ld+json` script.
+
+## T9 — Final report
+
+- Added `MORNING_REPORT.md` with completed work, blocked items, assumptions,
+  route inventory, run/test instructions, and remaining backend work.
+- Final validation passed: `npx tsc --noEmit`, `npm run lint`, and
+  `npm run build`. The branch is `overnight/frontend`; T1–T8 are individually
+  committed and there are no blocked tasks.
+- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, and `MORNING_REPORT.md`.
+- To test manually: follow the run/test steps in `MORNING_REPORT.md`.

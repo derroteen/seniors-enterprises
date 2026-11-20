@@ -8,4 +8,4 @@
 - [x] T6. Add placeholder-number WhatsApp links for product and order questions.
 - [x] T7. Add mock admin dashboard and catalog/order management; block all admin routes in production.
 - [x] T8. Polish loading, empty, error, and legal pages; add metadata, sitemap, robots, JSON-LD, and accessibility/responsive/theme checks.
-- [ ] T9. Write the morning report and verify the final production build and commit state.
+- [x] T9. Write the morning report and verify the final production build and commit state.
