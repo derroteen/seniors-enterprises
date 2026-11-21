@@ -7,11 +7,15 @@ import { useState, type FormEvent } from "react";
 
 import { useCartStore, getCartSubtotal } from "@/lib/cart-store";
 import {
+  createCheckoutOrder,
+  recordDemoPayment,
+} from "@/app/(store)/checkout/actions";
+import {
   checkoutFormSchema,
   type CheckoutFormValues,
 } from "@/lib/checkout/schema";
 import { getDeliveryFee, KENYAN_COUNTIES } from "@/lib/config/delivery";
-import { dataRepository } from "@/lib/data";
+import { mockRepository, saveMockOrder } from "@/lib/data/mock/repository";
 import type { DemoPaymentOutcome } from "@/lib/payments/types";
 import { mockPaymentProvider } from "@/lib/payments/mock";
 import { formatKes } from "@/lib/store-format";
@@ -46,6 +50,9 @@ function getFieldErrors(
 
 export function CheckoutForm() {
   const router = useRouter();
+  const isDemoMode = process.env.NEXT_PUBLIC_PAYMENT_MODE === "demo";
+  const isSupabaseSource =
+    process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase";
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const [values, setValues] = useState(initialValues);
@@ -84,58 +91,63 @@ export function CheckoutForm() {
 
     try {
       const customer = parsedValues.data;
-      const order = await dataRepository.createOrder({
-        user_id: null,
-        customer_name: customer.fullName,
-        email: customer.email,
-        phone: customer.phone,
-        delivery_address: {
-          county: customer.county,
-          town: customer.town,
-          street: customer.street,
-          landmark: customer.landmark,
-        },
-        subtotal_kes: subtotal,
-        delivery_fee_kes: deliveryFee,
-        total_kes: total,
-        status: "pending",
-        payment_status: "pending",
-        paystack_reference: null,
+      const orderResult = await createCheckoutOrder({
+        ...customer,
         items: items.map((item) => ({
-          product_id: item.productId,
-          variant_id: item.variantId,
-          product_name_snapshot: `${item.productName} (${item.size}, ${item.color})`,
-          unit_price_kes: item.unitPriceKes,
+          variantId: item.variantId,
           quantity: item.quantity,
         })),
       });
-
-      const payment = await mockPaymentProvider.pay({
-        amountKes: total,
-        orderNumber: order.order_number,
-        outcome: paymentOutcome,
-      });
-      const succeeded = payment.status === "success";
-      const updatedOrder = await dataRepository.updateOrderPayment(
-        order.order_number,
-        {
-          paymentReference: payment.reference,
-          paymentStatus: succeeded ? "paid" : "failed",
-          status: succeeded ? "paid" : "cancelled",
-        },
-      );
-
-      if (!updatedOrder) {
-        throw new Error("The demo order could not be updated after payment.");
+      if (!orderResult.ok) {
+        throw new Error(orderResult.message);
       }
 
+      if (orderResult.mockOrder) {
+        saveMockOrder(orderResult.mockOrder);
+      }
+
+      let outcome: DemoPaymentOutcome | null = null;
+      if (isDemoMode) {
+        const payment = await mockPaymentProvider.pay({
+          amountKes: orderResult.totalKes,
+          orderNumber: orderResult.orderNumber,
+          outcome: paymentOutcome,
+        });
+        outcome = payment.status;
+
+        if (isSupabaseSource) {
+          const updateResult = await recordDemoPayment({
+            orderNumber: orderResult.orderNumber,
+            contact: customer.email,
+            paymentReference: payment.reference,
+            outcome: payment.status,
+          });
+          if (!updateResult.ok) {
+            throw new Error(updateResult.message);
+          }
+        } else {
+          const updatedOrder = await mockRepository.updateOrderPayment(
+            orderResult.orderNumber,
+            {
+              paymentReference: payment.reference,
+              paymentStatus: payment.status === "success" ? "paid" : "failed",
+              status: payment.status === "success" ? "paid" : "cancelled",
+            },
+          );
+          if (!updatedOrder) {
+            throw new Error("The demo order could not be updated after payment.");
+          }
+        }
+      }
+
+      const succeeded = !isDemoMode || outcome === "success";
       if (succeeded) {
         clearCart();
       }
 
       router.push(
-        `/checkout/${succeeded ? "success" : "failed"}?order=${encodeURIComponent(
-          order.order_number,
+        `/checkout/${outcome === "failure" ? "failed" : "success"}?order=${encodeURIComponent(
+          orderResult.orderNumber,
         )}`,
       );
     } catch (error) {
@@ -173,9 +185,15 @@ export function CheckoutForm() {
   return (
     <Section>
       <Container>
-        <div className="mb-7 rounded-xl border border-accent bg-accent/15 px-4 py-3 text-sm font-semibold text-foreground">
-          DEMO MODE: no real payment taken
-        </div>
+        {isDemoMode ? (
+          <div className="mb-7 rounded-xl border border-accent bg-accent/15 px-4 py-3 text-sm font-semibold text-foreground">
+            DEMO MODE: no real payment taken
+          </div>
+        ) : (
+          <p className="mb-7 rounded-xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground">
+            Online payment is not enabled yet. You can arrange payment on WhatsApp after placing your order.
+          </p>
+        )}
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
           <form onSubmit={submitCheckout} noValidate className="grid gap-6">
             <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
@@ -346,36 +364,38 @@ export function CheckoutForm() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-              <fieldset>
-                <legend className="text-lg font-semibold">Demo payment result</legend>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Choose a test outcome. No payment is processed.
-                </p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {(["success", "failure"] as const).map((outcome) => (
-                    <label
-                      key={outcome}
-                      className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 text-sm ${
-                        paymentOutcome === outcome
-                          ? "border-primary bg-primary/10"
-                          : "border-border"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="paymentOutcome"
-                        value={outcome}
-                        checked={paymentOutcome === outcome}
-                        onChange={() => setPaymentOutcome(outcome)}
-                        className="accent-primary"
-                      />
-                      Simulate {outcome}
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            </section>
+            {isDemoMode ? (
+              <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+                <fieldset>
+                  <legend className="text-lg font-semibold">Demo payment result</legend>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Choose a test outcome. No payment is processed.
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    {(["success", "failure"] as const).map((outcome) => (
+                      <label
+                        key={outcome}
+                        className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 text-sm ${
+                          paymentOutcome === outcome
+                            ? "border-primary bg-primary/10"
+                            : "border-border"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="paymentOutcome"
+                          value={outcome}
+                          checked={paymentOutcome === outcome}
+                          onChange={() => setPaymentOutcome(outcome)}
+                          className="accent-primary"
+                        />
+                        Simulate {outcome}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              </section>
+            ) : null}
 
             {formError ? (
               <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
@@ -384,7 +404,9 @@ export function CheckoutForm() {
             ) : null}
 
             <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? "Preparing demo payment…" : `Place demo order · ${formatKes(total)}`}
+              {isSubmitting
+                ? "Creating your order…"
+                : `${isDemoMode ? "Place demo order" : "Place order"} · ${formatKes(total)}`}
             </Button>
           </form>
 

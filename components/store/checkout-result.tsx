@@ -1,11 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-import { dataRepository } from "@/lib/data";
-import type { Order } from "@/lib/data/types";
-import { formatKes } from "@/lib/store-format";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
@@ -16,84 +12,53 @@ interface CheckoutResultProps {
 }
 
 export function CheckoutResult({ orderNumber, outcome }: CheckoutResultProps) {
-  const [order, setOrder] = useState<Order | null>(null);
-  const [lookupError, setLookupError] = useState("");
-
-  useEffect(() => {
-    if (!orderNumber) {
-      return;
-    }
-
-    let active = true;
-    dataRepository
-      .getOrderByNumber(orderNumber)
-      .then((result) => {
-        if (active) {
-          setOrder(result);
-        }
-      })
-      .catch((error: unknown) => {
-        console.error("Could not load demo order details.", error);
-        if (active) {
-          setLookupError("Order details could not be loaded in this browser.");
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [orderNumber]);
-
+  const isDemoMode = process.env.NEXT_PUBLIC_PAYMENT_MODE === "demo";
   const succeeded = outcome === "success";
-  const orderWhatsAppUrl =
-    succeeded && orderNumber
-      ? getWhatsAppUrl(
-          `Hello, I have a question about my order ${orderNumber}.`,
-        )
-      : null;
+  const orderWhatsAppUrl = orderNumber
+    ? getWhatsAppUrl(
+        isDemoMode
+          ? `Hello, I have a question about my order ${orderNumber}.`
+          : `Hello, I placed order ${orderNumber} and would like to arrange payment.`,
+      )
+    : null;
 
   return (
     <Section>
       <Container>
         <div className="mx-auto max-w-2xl">
-          <div className="rounded-xl border border-accent bg-accent/15 px-4 py-3 text-sm font-semibold">
-            DEMO MODE: no real payment taken
-          </div>
+          {isDemoMode ? (
+            <div className="rounded-xl border border-accent bg-accent/15 px-4 py-3 text-sm font-semibold">
+              DEMO MODE: no real payment taken
+            </div>
+          ) : null}
           <div className="mt-6 rounded-2xl border border-border bg-surface p-6 sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
-              {succeeded ? "Order complete" : "Payment not completed"}
+              {isDemoMode
+                ? succeeded
+                  ? "Demo order complete"
+                  : "Demo payment not completed"
+                : "Order received"}
             </p>
             <h1 className="mt-2 font-display text-3xl font-semibold">
-              {succeeded ? "Thank you for your order." : "Your demo payment failed."}
+              {isDemoMode
+                ? succeeded
+                  ? "Thank you for your order."
+                  : "Your demo payment failed."
+                : "We will contact you on WhatsApp to arrange payment."}
             </h1>
             <p className="mt-3 leading-7 text-muted-foreground">
-              {succeeded
-                ? "This demonstration order was recorded locally in this browser."
-                : "No real payment was taken. Your cart is still available if you want to try again."}
+              {isDemoMode
+                ? succeeded
+                  ? "This demonstration order was recorded. No real payment was taken."
+                  : "No real payment was taken. Your cart is still available if you want to try again."
+                : "Your order is pending while payment is arranged. No online payment was taken."}
             </p>
 
             {orderNumber ? (
               <div className="mt-6 rounded-xl bg-background p-4">
                 <p className="text-xs text-muted-foreground">Order number</p>
                 <p className="mt-1 font-mono text-lg font-semibold">{orderNumber}</p>
-                {order ? (
-                  <div className="mt-4 grid gap-2 text-sm">
-                    <p>
-                      Status: <span className="font-medium capitalize">{order.status}</span>
-                    </p>
-                    <p>
-                      Total: <span className="font-medium">{formatKes(order.total_kes)}</span>
-                    </p>
-                  </div>
-                ) : null}
               </div>
-            ) : null}
-
-            {lookupError ? (
-              <p role="status" className="mt-4 text-sm text-muted-foreground">
-                {lookupError} Use the order number above to look it up while this
-                browser retains its demo order.
-              </p>
             ) : null}
 
             <div className="mt-7 flex flex-wrap gap-3">
@@ -112,7 +77,9 @@ export function CheckoutResult({ orderNumber, outcome }: CheckoutResultProps) {
                   rel="noopener noreferrer"
                   className="inline-flex min-h-11 items-center rounded-lg border border-border px-5 text-sm font-semibold hover:bg-background"
                 >
-                  Questions about your order?
+                  {isDemoMode
+                    ? "Questions about your order?"
+                    : "Arrange payment on WhatsApp"}
                 </a>
               ) : null}
               <Link

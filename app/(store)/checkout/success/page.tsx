@@ -4,8 +4,8 @@ import { CheckoutResult } from "@/components/store/checkout-result";
 import { firstSearchParam } from "@/lib/store-format";
 
 export const metadata: Metadata = {
-  title: "Order confirmed",
-  description: "Your demo order confirmation.",
+  title: "Order received",
+  description: "Your order has been received.",
 };
 
 interface CheckoutSuccessPageProps {

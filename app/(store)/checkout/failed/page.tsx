@@ -5,7 +5,7 @@ import { firstSearchParam } from "@/lib/store-format";
 
 export const metadata: Metadata = {
   title: "Payment not completed",
-  description: "Demo payment failure details.",
+  description: "Payment details for your order.",
 };
 
 interface CheckoutFailedPageProps {

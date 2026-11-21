@@ -24,7 +24,10 @@ export interface StoreRepository {
   searchProducts(query: string): Promise<SearchProduct[]>;
   getFilterOptions(): Promise<{ sizes: string[]; colors: string[] }>;
   createOrder(input: CreateOrderInput): Promise<Order>;
-  getOrderByNumber(orderNumber: string): Promise<Order | null>;
+  getOrderByNumber(
+    orderNumber: string,
+    contact: string,
+  ): Promise<Order | null>;
   getOrders(): Promise<Order[]>;
   updateOrderPayment(
     orderNumber: string,

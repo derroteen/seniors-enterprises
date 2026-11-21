@@ -1,3 +1,5 @@
+import "server-only";
+
 import type { StoreRepository } from "@/lib/data/repository";
 import { mockRepository } from "@/lib/data/mock/repository";
 import { supabaseRepository } from "@/lib/data/supabase/repository";

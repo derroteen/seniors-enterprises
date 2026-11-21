@@ -4,7 +4,7 @@ import { CheckoutForm } from "@/components/store/checkout-form";
 
 export const metadata: Metadata = {
   title: "Checkout",
-  description: "Enter your contact and delivery details to place a demo order.",
+  description: "Enter your contact and delivery details to place an order.",
 };
 
 export default function CheckoutPage() {

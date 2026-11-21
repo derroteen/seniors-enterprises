@@ -13,6 +13,7 @@ import type {
 } from "@/lib/data/types";
 import type { StoreRepository } from "@/lib/data/repository";
 import { mockCategories, mockProducts } from "@/lib/data/mock/products";
+import { getDeliveryFee } from "@/lib/config/delivery";
 
 const DEMO_ORDERS_KEY = "seniors-demo-orders";
 let memoryOrders: Order[] = [];
@@ -66,6 +67,47 @@ function writeOrders(orders: Order[]) {
 function createId() {
   return globalThis.crypto?.randomUUID?.() ??
     `demo-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
+}
+
+function createOrderNumber(orders: Order[]) {
+  const existingNumbers = new Set(orders.map((order) => order.order_number));
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const digits = createId().replace(/\D/g, "").slice(0, 6).padEnd(6, "0");
+    const orderNumber = `SE-${digits}`;
+    if (!existingNumbers.has(orderNumber)) {
+      return orderNumber;
+    }
+  }
+
+  throw new Error("Could not create a unique demo order number.");
+}
+
+function normalizedContact(contact: string) {
+  const value = contact.trim();
+  if (value.includes("@")) {
+    return value.toLocaleLowerCase();
+  }
+
+  const digits = value.replace(/\D/g, "");
+  return digits.startsWith("0") ? `254${digits.slice(1)}` : digits;
+}
+
+function orderMatchesContact(order: Order, contact: string) {
+  const normalized = normalizedContact(contact);
+  return normalized === normalizedContact(order.email) ||
+    normalized === normalizedContact(order.phone);
+}
+
+export function saveMockOrder(order: Order) {
+  if (typeof window === "undefined") {
+    throw new Error("Demo orders can only be saved in a browser.");
+  }
+
+  const orders = readOrders();
+  if (!orders.some((existing) => existing.order_number === order.order_number)) {
+    writeOrders([order, ...orders]);
+  }
 }
 
 export const mockRepository: StoreRepository = {
@@ -192,16 +234,52 @@ export const mockRepository: StoreRepository = {
   async createOrder(input: CreateOrderInput): Promise<Order> {
     const orders = readOrders();
     const orderId = createId();
-    const nextNumber = String(orders.length + 123).padStart(6, "0");
-    const items: OrderItem[] = input.items.map((item) => ({
-      ...item,
-      id: createId(),
-      order_id: orderId,
-    }));
+    const items: OrderItem[] = input.items.map((item) => {
+      const product = mockProducts.find(
+        (candidate) =>
+          candidate.is_active &&
+          candidate.variants.some((variant) => variant.id === item.variant_id),
+      );
+      const variant = product?.variants.find(
+        (candidate) => candidate.id === item.variant_id,
+      );
+
+      if (!product || !variant) {
+        throw new Error("A selected product variant is no longer available.");
+      }
+      if (item.quantity > variant.stock_quantity) {
+        throw new Error(`Not enough stock is available for ${product.name}.`);
+      }
+
+      return {
+        id: createId(),
+        order_id: orderId,
+        product_id: product.id,
+        variant_id: variant.id,
+        product_name_snapshot: `${product.name} (${variant.size}, ${variant.color})`,
+        unit_price_kes: variant.price_override_kes ?? product.base_price_kes,
+        quantity: item.quantity,
+      };
+    });
+    const subtotalKes = items.reduce(
+      (subtotal, item) => subtotal + item.unit_price_kes * item.quantity,
+      0,
+    );
+    const deliveryFeeKes = getDeliveryFee(input.delivery_address.county);
     const order: Order = {
-      ...input,
       id: orderId,
-      order_number: `SE-${nextNumber}`,
+      order_number: createOrderNumber(orders),
+      user_id: null,
+      customer_name: input.customer_name,
+      email: input.email,
+      phone: input.phone,
+      delivery_address: input.delivery_address,
+      subtotal_kes: subtotalKes,
+      delivery_fee_kes: deliveryFeeKes,
+      total_kes: subtotalKes + deliveryFeeKes,
+      status: "pending",
+      payment_status: "pending",
+      paystack_reference: null,
       created_at: new Date().toISOString(),
       items,
     };
@@ -209,8 +287,15 @@ export const mockRepository: StoreRepository = {
     return order;
   },
 
-  async getOrderByNumber(orderNumber) {
-    return readOrders().find((order) => order.order_number === orderNumber) ?? null;
+  async getOrderByNumber(
+    orderNumber: string,
+    contact: string,
+  ): Promise<Order | null> {
+    return readOrders().find(
+      (candidate) =>
+        candidate.order_number === orderNumber &&
+        orderMatchesContact(candidate, contact),
+    ) ?? null;
   },
 
   async getOrders() {

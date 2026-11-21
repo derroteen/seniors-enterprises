@@ -7,7 +7,7 @@ import { firstSearchParam } from "@/lib/store-format";
 
 export const metadata: Metadata = {
   title: "Track an order",
-  description: "Look up a demo order by its order number.",
+  description: "Look up an order using its number and checkout contact details.",
 };
 
 interface TrackOrderPageProps {
@@ -25,14 +25,15 @@ export default async function TrackOrderPage({
         <Container>
           <div className="mx-auto max-w-2xl rounded-2xl border border-border bg-surface p-6 sm:p-8">
             <p className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
-              Demo order lookup
+              Order lookup
             </p>
             <h1 className="mt-2 font-display text-3xl font-semibold">
               Track your order
             </h1>
             <p className="mt-3 mb-6 leading-7 text-muted-foreground">
-              Enter the order number from your confirmation. Demo orders are
-              stored only in the browser where they were placed.
+              Enter the order number and the phone number or email address used
+              at checkout. For your privacy, order numbers alone cannot be used
+              to view order details.
             </p>
             <OrderLookup initialOrderNumber={firstSearchParam(number) ?? ""} />
           </div>

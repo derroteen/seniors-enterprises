@@ -87,6 +87,18 @@ export interface Order {
   items: OrderItem[];
 }
 
+export interface OrderLookupItem {
+  product_name_snapshot: string;
+  unit_price_kes: number;
+  quantity: number;
+}
+
+export interface OrderLookupResult {
+  status: OrderStatus;
+  items: OrderLookupItem[];
+  total_kes: number;
+}
+
 export type ProductSort = "newest" | "price-asc" | "price-desc";
 
 export interface ProductFilters {
@@ -113,17 +125,19 @@ export interface SearchProduct {
   imageUrl: string | null;
 }
 
-export type NewOrderItem = Omit<OrderItem, "id" | "order_id">;
+export interface CreateOrderInput {
+  customer_name: string;
+  email: string;
+  phone: string;
+  delivery_address: DeliveryAddress;
+  items: Array<{
+    variant_id: string;
+    quantity: number;
+  }>;
+}
 
 export interface UpdateOrderPaymentInput {
   paymentReference: string;
   paymentStatus: PaymentStatus;
   status: OrderStatus;
 }
-
-export type CreateOrderInput = Omit<
-  Order,
-  "id" | "order_number" | "created_at" | "items"
-> & {
-  items: NewOrderItem[];
-};
