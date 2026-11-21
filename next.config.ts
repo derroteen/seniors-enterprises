@@ -26,6 +26,11 @@ const supabaseRemotePattern = isSupabaseConfigured() && supabaseUrl
   : null;
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   images: {
     remotePatterns: supabaseRemotePattern ? [supabaseRemotePattern] : [],
   },

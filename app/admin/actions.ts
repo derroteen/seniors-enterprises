@@ -1,0 +1,437 @@
+"use server";
+
+import "server-only";
+
+import { randomUUID } from "node:crypto";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+
+import { requireAdminAction, requireAdminPage } from "@/lib/admin/auth";
+import { createClient } from "@/lib/supabase/server";
+
+const slugSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(120)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use a lowercase, hyphenated slug.");
+
+const variantSchema = z.object({
+  size: z.string().trim().min(1).max(32),
+  color: z.string().trim().min(1).max(64),
+  stock_quantity: z.number().int().min(0).max(1_000_000),
+  sku: z.string().trim().max(100).optional(),
+  price_override_kes: z.number().int().positive().nullable().optional(),
+});
+
+const productSchema = z
+  .object({
+    id: z.string().uuid().nullable(),
+    name: z.string().trim().min(1).max(160),
+    slug: slugSchema,
+    category_id: z.string().uuid(),
+    description: z.string().trim().max(5_000).nullable(),
+    base_price_kes: z.number().int().positive(),
+    compare_at_price_kes: z.number().int().positive().nullable(),
+    is_active: z.boolean(),
+    is_featured: z.boolean(),
+    variants: z.array(variantSchema).min(1).max(300),
+  })
+  .superRefine((product, context) => {
+    if (
+      product.compare_at_price_kes !== null &&
+      product.compare_at_price_kes <= product.base_price_kes
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "The was price must be greater than the current price.",
+        path: ["compare_at_price_kes"],
+      });
+    }
+
+    const combinations = new Set<string>();
+    const skus = new Set<string>();
+    for (const [index, variant] of product.variants.entries()) {
+      const combination = `${variant.size.toLocaleLowerCase()}|${variant.color.toLocaleLowerCase()}`;
+      if (combinations.has(combination)) {
+        context.addIssue({
+          code: "custom",
+          message: "Each size and color combination must be unique.",
+          path: ["variants", index],
+        });
+      }
+      combinations.add(combination);
+
+      const sku = variant.sku?.trim().toLocaleLowerCase();
+      if (sku && skus.has(sku)) {
+        context.addIssue({
+          code: "custom",
+          message: "Variant SKUs must be unique.",
+          path: ["variants", index, "sku"],
+        });
+      }
+      if (sku) {
+        skus.add(sku);
+      }
+    }
+  });
+
+const categorySchema = z.object({
+  id: z.string().uuid().nullable(),
+  name: z.string().trim().min(1).max(100),
+  slug: slugSchema,
+});
+
+const orderStatusSchema = z.enum([
+  "pending",
+  "paid",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+  "refunded",
+]);
+
+const imageLimitBytes = 5 * 1024 * 1024;
+const allowedImageTypes = new Map([
+  ["image/jpeg", { extension: "jpg", signature: [0xff, 0xd8, 0xff] }],
+  ["image/png", { extension: "png", signature: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] }],
+  ["image/webp", { extension: "webp", signature: null }],
+]);
+
+function revalidateStorefront() {
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath("/shop/[category]", "page");
+  revalidatePath("/product/[slug]", "page");
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/admin");
+}
+
+function getVariantFileType(type: string, bytes: Uint8Array) {
+  const imageType = allowedImageTypes.get(type);
+  if (!imageType) {
+    return null;
+  }
+  if (imageType.signature) {
+    return imageType.signature.every((byte, index) => bytes[index] === byte)
+      ? imageType
+      : null;
+  }
+  const isWebp =
+    bytes.length >= 12 &&
+    String.fromCharCode(...bytes.slice(0, 4)) === "RIFF" &&
+    String.fromCharCode(...bytes.slice(8, 12)) === "WEBP";
+  return isWebp ? imageType : null;
+}
+
+export async function loginAdmin(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const credentials = z
+    .object({ email: z.email(), password: z.string().min(1).max(256) })
+    .safeParse({ email, password });
+
+  if (!credentials.success) {
+    redirect("/admin/login?error=credentials");
+  }
+
+  const supabase = await createClient();
+  const { error: signInError } = await supabase.auth.signInWithPassword(
+    credentials.data,
+  );
+  if (signInError) {
+    redirect("/admin/login?error=credentials");
+  }
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    await supabase.auth.signOut();
+    redirect("/admin/login?error=unavailable");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userData.user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    await supabase.auth.signOut();
+    redirect("/admin/login?error=unavailable");
+  }
+  if (profile?.role !== "admin") {
+    await supabase.auth.signOut();
+    redirect("/admin/login?error=not-admin");
+  }
+
+  redirect("/admin");
+}
+
+export async function logoutAdmin() {
+  await requireAdminPage();
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    throw new Error(`Could not sign out: ${error.message}`);
+  }
+  redirect("/admin/login");
+}
+
+export async function saveProduct(input: unknown) {
+  const { client } = await requireAdminAction();
+  const parsed = productSchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Product details are invalid.");
+  }
+  const product = parsed.data;
+
+  const { data: category, error: categoryError } = await client
+    .from("categories")
+    .select("id")
+    .eq("id", product.category_id)
+    .maybeSingle();
+  if (categoryError) {
+    throw new Error(`Could not verify the category: ${categoryError.message}`);
+  }
+  if (!category) {
+    throw new Error("Choose a category that still exists.");
+  }
+
+  const productValues = {
+    name: product.name,
+    slug: product.slug,
+    description: product.description || null,
+    category_id: product.category_id,
+    base_price_kes: product.base_price_kes,
+    compare_at_price_kes: product.compare_at_price_kes,
+    is_active: product.is_active,
+    is_featured: product.is_featured,
+  };
+  const savedProductResult = product.id
+    ? await client
+        .from("products")
+        .update(productValues)
+        .eq("id", product.id)
+        .select("*")
+        .single()
+    : await client.from("products").insert(productValues).select("*").single();
+
+  if (savedProductResult.error) {
+    throw new Error(`Could not save product: ${savedProductResult.error.message}`);
+  }
+  const savedProduct = savedProductResult.data;
+
+  try {
+    const { data: existingVariants, error: existingVariantsError } = await client
+      .from("product_variants")
+      .select("*")
+      .eq("product_id", savedProduct.id);
+    if (existingVariantsError) {
+      throw new Error(`Could not load existing variants: ${existingVariantsError.message}`);
+    }
+
+    const existingByCombination = new Map(
+      (existingVariants ?? []).map((variant) => [
+        `${variant.size.toLocaleLowerCase()}|${variant.color.toLocaleLowerCase()}`,
+        variant,
+      ]),
+    );
+    const desiredCombinations = new Set<string>();
+
+    for (const variant of product.variants) {
+      const combination = `${variant.size.toLocaleLowerCase()}|${variant.color.toLocaleLowerCase()}`;
+      desiredCombinations.add(combination);
+      const existing = existingByCombination.get(combination);
+      const variantValues = {
+        product_id: savedProduct.id,
+        size: variant.size,
+        color: variant.color,
+        sku:
+          variant.sku ||
+          existing?.sku ||
+          `${product.slug}-${variant.size}-${variant.color}-${randomUUID().slice(0, 8)}`
+            .replace(/[^a-zA-Z0-9-]/g, "-")
+            .toUpperCase(),
+        stock_quantity: variant.stock_quantity,
+        price_override_kes:
+          variant.price_override_kes === undefined
+            ? existing?.price_override_kes ?? null
+            : variant.price_override_kes,
+      };
+
+      const result = existing
+        ? await client
+            .from("product_variants")
+            .update(variantValues)
+            .eq("id", existing.id)
+        : await client.from("product_variants").insert(variantValues);
+      if (result.error) {
+        throw new Error(`Could not save variant ${variant.size}/${variant.color}: ${result.error.message}`);
+      }
+    }
+
+    const removedVariantIds = (existingVariants ?? [])
+      .filter(
+        (variant) =>
+          !desiredCombinations.has(
+            `${variant.size.toLocaleLowerCase()}|${variant.color.toLocaleLowerCase()}`,
+          ),
+      )
+      .map((variant) => variant.id);
+    if (removedVariantIds.length > 0) {
+      const { error } = await client
+        .from("product_variants")
+        .delete()
+        .in("id", removedVariantIds);
+      if (error) {
+        throw new Error(`Could not remove variants: ${error.message}`);
+      }
+    }
+  } finally {
+    revalidateStorefront();
+  }
+}
+
+export async function deleteProduct(productId: string) {
+  const { client } = await requireAdminAction();
+  const id = z.string().uuid().parse(productId);
+  const { data: product, error: lookupError } = await client
+    .from("products")
+    .select("id")
+    .eq("id", id)
+    .maybeSingle();
+  if (lookupError) {
+    throw new Error(`Could not find product: ${lookupError.message}`);
+  }
+  if (!product) {
+    throw new Error("The product no longer exists.");
+  }
+
+  const { error } = await client.from("products").delete().eq("id", id);
+  if (error) {
+    throw new Error(`Could not delete product: ${error.message}`);
+  }
+  revalidateStorefront();
+}
+
+export async function saveCategory(input: unknown) {
+  const { client } = await requireAdminAction();
+  const parsed = categorySchema.safeParse(input);
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Category details are invalid.");
+  }
+
+  const result = parsed.data.id
+    ? await client
+        .from("categories")
+        .update({ name: parsed.data.name, slug: parsed.data.slug })
+        .eq("id", parsed.data.id)
+        .select("id")
+        .maybeSingle()
+    : await client
+        .from("categories")
+        .insert({ name: parsed.data.name, slug: parsed.data.slug })
+        .select("id")
+        .single();
+
+  if (result.error) {
+    throw new Error(`Could not save category: ${result.error.message}`);
+  }
+  if (!result.data) {
+    throw new Error("The category no longer exists.");
+  }
+  revalidateStorefront();
+}
+
+export async function uploadProductImage(formData: FormData) {
+  const { client } = await requireAdminAction();
+  const productId = z.string().uuid().parse(String(formData.get("productId") ?? ""));
+  const altText = z.string().trim().max(200).parse(String(formData.get("altText") ?? ""));
+  const file = formData.get("file");
+
+  if (typeof File === "undefined" || !(file instanceof File) || file.size === 0) {
+    throw new Error("Choose an image file to upload.");
+  }
+  if (file.size > imageLimitBytes) {
+    throw new Error("Images must be 5 MB or smaller.");
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const imageType = getVariantFileType(file.type, bytes);
+  if (!imageType) {
+    throw new Error("Use a valid JPG, PNG, or WebP image.");
+  }
+
+  const { data: product, error: productError } = await client
+    .from("products")
+    .select("id")
+    .eq("id", productId)
+    .maybeSingle();
+  if (productError) {
+    throw new Error(`Could not verify the product: ${productError.message}`);
+  }
+  if (!product) {
+    throw new Error("The selected product no longer exists.");
+  }
+
+  const { data: lastImage, error: imageOrderError } = await client
+    .from("product_images")
+    .select("sort_order")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (imageOrderError) {
+    throw new Error(`Could not determine image order: ${imageOrderError.message}`);
+  }
+
+  const objectPath = `${productId}/${randomUUID()}.${imageType.extension}`;
+  const storage = client.storage.from("product-images");
+  const { error: uploadError } = await storage.upload(objectPath, file, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (uploadError) {
+    throw new Error(`Could not upload image: ${uploadError.message}`);
+  }
+
+  const { data: publicUrl } = storage.getPublicUrl(objectPath);
+  const { error: insertError } = await client.from("product_images").insert({
+    product_id: productId,
+    url: publicUrl.publicUrl,
+    alt_text: altText || file.name.replace(/\.[^.]+$/, ""),
+    sort_order: (lastImage?.sort_order ?? -1) + 1,
+  });
+  if (insertError) {
+    const { error: cleanupError } = await storage.remove([objectPath]);
+    if (cleanupError) {
+      throw new Error(
+        `Could not save image metadata: ${insertError.message}. Removing the uploaded file also failed: ${cleanupError.message}`,
+      );
+    }
+    throw new Error(`Could not save image metadata: ${insertError.message}`);
+  }
+
+  revalidateStorefront();
+}
+
+export async function updateOrderStatus(orderNumber: string, status: string) {
+  const { client } = await requireAdminAction();
+  const parsedOrderNumber = z.string().regex(/^SE-\d{6,}$/).parse(orderNumber);
+  const parsedStatus = orderStatusSchema.parse(status);
+  const { data, error } = await client
+    .from("orders")
+    .update({ status: parsedStatus })
+    .eq("order_number", parsedOrderNumber)
+    .select("order_number")
+    .maybeSingle();
+  if (error) {
+    throw new Error(`Could not update order status: ${error.message}`);
+  }
+  if (!data) {
+    throw new Error(`Order ${parsedOrderNumber} was not found.`);
+  }
+  revalidateStorefront();
+}

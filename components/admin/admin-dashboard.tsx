@@ -1,30 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
+import {
+  deleteProduct as deleteProductAction,
+  logoutAdmin,
+  saveCategory as saveCategoryAction,
+  saveProduct as saveProductAction,
+  updateOrderStatus as updateOrderStatusAction,
+  uploadProductImage,
+} from "@/app/admin/actions";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
-import { mockRepository } from "@/lib/data/mock/repository";
-import type {
-  Category,
-  Order,
-  OrderStatus,
-  Product,
-  ProductVariant,
-} from "@/lib/data/types";
-import {
-  readMockAdminCatalog,
-  writeMockAdminCatalog,
-  type MockAdminCatalog,
-} from "@/lib/admin/mock-catalog-storage";
+import type { Category, Order, OrderStatus, Product, ProductVariant } from "@/lib/data/types";
 import { formatKes } from "@/lib/store-format";
 
-type AdminSection = "dashboard" | "products" | "categories" | "orders";
+interface AdminCatalog {
+  categories: Category[];
+  products: Product[];
+}
 
 interface AdminDashboardProps {
-  initialCatalog: MockAdminCatalog;
+  initialCatalog: AdminCatalog;
+  initialOrders: AdminOrder[];
 }
+
+type AdminOrder = Pick<
+  Order,
+  | "id"
+  | "order_number"
+  | "customer_name"
+  | "email"
+  | "phone"
+  | "delivery_address"
+  | "subtotal_kes"
+  | "delivery_fee_kes"
+  | "total_kes"
+  | "status"
+  | "payment_status"
+  | "created_at"
+  | "items"
+>;
 
 interface ProductFormValues {
   name: string;
@@ -38,6 +56,14 @@ interface ProductFormValues {
   isFeatured: boolean;
 }
 
+interface VariantInput {
+  size: string;
+  color: string;
+  stock_quantity: number;
+  sku?: string;
+  price_override_kes?: number | null;
+}
+
 const emptyProductForm: ProductFormValues = {
   name: "",
   slug: "",
@@ -45,7 +71,7 @@ const emptyProductForm: ProductFormValues = {
   price: "",
   compareAtPrice: "",
   description: "",
-  variants: "S,Black,5",
+  variants: "S,Black,5,,",
   isActive: true,
   isFeatured: false,
 };
@@ -60,12 +86,14 @@ const orderStatuses: OrderStatus[] = [
   "refunded",
 ];
 
-const sections: { id: AdminSection; label: string }[] = [
+const sections = [
   { id: "dashboard", label: "Dashboard" },
   { id: "products", label: "Products" },
   { id: "categories", label: "Categories" },
   { id: "orders", label: "Orders" },
-];
+] as const;
+
+type AdminSection = (typeof sections)[number]["id"];
 
 function toSlug(value: string) {
   return value
@@ -77,58 +105,81 @@ function toSlug(value: string) {
 
 function variantsToText(variants: ProductVariant[]) {
   return variants
-    .map((variant) => `${variant.size},${variant.color},${variant.stock_quantity}`)
+    .map(
+      (variant) =>
+        `${variant.size},${variant.color},${variant.stock_quantity},${variant.sku},${variant.price_override_kes ?? ""}`,
+    )
     .join("\n");
 }
 
-function makeVariants(
-  value: string,
-  productId: string,
-  slug: string,
-): ProductVariant[] {
+function makeVariants(value: string): VariantInput[] {
   const lines = value.split("\n").map((line) => line.trim()).filter(Boolean);
   if (lines.length === 0) {
-    throw new Error("Add at least one size, color, and stock row.");
+    throw new Error("Add at least one size, color, stock, SKU, and optional price row.");
   }
 
+  const combinations = new Set<string>();
   return lines.map((line, index) => {
-    const [size, color, quantityText, extra] = line.split(",").map((part) => part.trim());
+    const [size, color, quantityText, skuText, overrideText, extra] = line
+      .split(",")
+      .map((part) => part.trim());
     const quantity = Number(quantityText);
+    const priceOverride = overrideText ? Number(overrideText) : null;
+    const combination = `${size?.toLocaleLowerCase()}|${color?.toLocaleLowerCase()}`;
+
     if (
       !size ||
       !color ||
       extra !== undefined ||
       !Number.isSafeInteger(quantity) ||
-      quantity < 0
+      quantity < 0 ||
+      (priceOverride !== null &&
+        (!Number.isSafeInteger(priceOverride) || priceOverride < 1))
     ) {
       throw new Error(
-        `Variant row ${index + 1} must be "size,color,stock" with a non-negative stock count.`,
+        `Variant row ${index + 1} must be "size,color,stock,sku,price-override" with valid whole-shilling values.`,
       );
     }
+    if (combinations.has(combination)) {
+      throw new Error(`Variant row ${index + 1} repeats a size and color combination.`);
+    }
+    combinations.add(combination);
 
     return {
-      id: globalThis.crypto.randomUUID(),
-      product_id: productId,
       size,
       color,
-      sku: `${slug}-${size}-${color}`.replace(/[^a-zA-Z0-9-]/g, "-").toUpperCase(),
       stock_quantity: quantity,
-      price_override_kes: null,
+      ...(skuText ? { sku: skuText } : {}),
+      price_override_kes: priceOverride,
     };
   });
 }
 
-function getTodayOrders(orders: Order[]) {
-  const today = new Date().toLocaleDateString("en-CA");
+function getTodayOrders(orders: AdminOrder[]) {
+  const dateInKenya = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Nairobi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const today = dateInKenya.format(new Date());
   return orders.filter(
-    (order) => new Date(order.created_at).toLocaleDateString("en-CA") === today,
+    (order) => dateInKenya.format(new Date(order.created_at)) === today,
   );
 }
 
-export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
-  const [catalog, setCatalog] = useState(initialCatalog);
+function showError(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+export function AdminDashboard({
+  initialCatalog,
+  initialOrders,
+}: AdminDashboardProps) {
+  const router = useRouter();
+  const catalog = initialCatalog;
+  const orders = initialOrders;
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
-  const [orders, setOrders] = useState<Order[]>([]);
   const [productForm, setProductForm] = useState(emptyProductForm);
   const [categoryName, setCategoryName] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
@@ -138,23 +189,7 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
   const [formError, setFormError] = useState("");
   const [formMessage, setFormMessage] = useState("");
   const [orderError, setOrderError] = useState("");
-
-  useEffect(() => {
-    void Promise.resolve()
-      .then(() => readMockAdminCatalog(initialCatalog))
-      .then(setCatalog);
-    mockRepository
-      .getOrders()
-      .then((savedOrders) => {
-        setOrders(savedOrders.sort((first, second) =>
-          second.created_at.localeCompare(first.created_at),
-        ));
-      })
-      .catch((error: unknown) => {
-        console.error("Could not load demo admin orders.", error);
-        setOrderError("Demo orders could not be loaded.");
-      });
-  }, [initialCatalog]);
+  const [isPending, startTransition] = useTransition();
 
   const todayOrders = useMemo(() => getTodayOrders(orders), [orders]);
   const todayRevenue = todayOrders
@@ -165,24 +200,6 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
       .filter((variant) => variant.stock_quantity <= 2)
       .map((variant) => ({ productName: product.name, variant })),
   );
-
-  function saveCatalog(nextCatalog: MockAdminCatalog) {
-    try {
-      writeMockAdminCatalog(nextCatalog);
-      setCatalog(nextCatalog);
-      setFormError("");
-      setFormMessage("Changes saved in this browser.");
-      return true;
-    } catch (error) {
-      console.error("Could not save demo admin changes.", error);
-      setFormError(
-        error instanceof Error
-          ? error.message
-          : "Changes could not be saved in this browser.",
-      );
-      return false;
-    }
-  }
 
   function startProductEdit(product: Product) {
     setEditingProductId(product.id);
@@ -209,6 +226,7 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
     event.preventDefault();
     setFormError("");
     setFormMessage("");
+
     const category = catalog.categories.find(
       (entry) => entry.id === productForm.categoryId,
     );
@@ -229,71 +247,41 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
         (!Number.isSafeInteger(compareAtPrice) || compareAtPrice <= price))
     ) {
       setFormError(
-        "Enter a product name, slug, category, whole-shilling price, and a higher compare-at price if used.",
+        "Enter a product name, slug, category, whole-shilling price, and a higher was price if used.",
       );
       return;
     }
 
-    const existing = catalog.products.find(
-      (product) => product.id === editingProductId,
-    );
-    const productId = existing?.id ?? globalThis.crypto.randomUUID();
-    let variants: ProductVariant[];
+    let variants: VariantInput[];
     try {
-      variants = makeVariants(productForm.variants, productId, slug);
+      variants = makeVariants(productForm.variants);
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Product variants are invalid.",
-      );
+      setFormError(showError(error, "Product variants are invalid."));
       return;
     }
 
-    const now = new Date().toISOString();
-    const nextProduct: Product = {
-      id: productId,
-      name,
-      slug,
-      description: productForm.description.trim() || null,
-      category_id: category.id,
-      base_price_kes: price,
-      compare_at_price_kes: compareAtPrice,
-      is_active: productForm.isActive,
-      is_featured: productForm.isFeatured,
-      created_at: existing?.created_at ?? now,
-      updated_at: now,
-      images:
-        existing?.images ??
-        (category.image_url
-          ? [
-              {
-                id: globalThis.crypto.randomUUID(),
-                product_id: productId,
-                url: category.image_url,
-                alt_text: name,
-                sort_order: 0,
-              },
-            ]
-          : []),
-      variants,
-    };
-    const nextProducts = existing
-      ? catalog.products.map((product) =>
-          product.id === productId ? nextProduct : product,
-        )
-      : [nextProduct, ...catalog.products];
-    if (
-      nextProducts.some(
-        (product) => product.id !== productId && product.slug === slug,
-      )
-    ) {
-      setFormError("Another product already uses that slug.");
-      return;
-    }
-
-    if (saveCatalog({ ...catalog, products: nextProducts })) {
-      setProductForm(emptyProductForm);
-      setEditingProductId(null);
-    }
+    startTransition(async () => {
+      try {
+        await saveProductAction({
+          id: editingProductId,
+          name,
+          slug,
+          category_id: category.id,
+          description: productForm.description.trim() || null,
+          base_price_kes: price,
+          compare_at_price_kes: compareAtPrice,
+          is_active: productForm.isActive,
+          is_featured: productForm.isFeatured,
+          variants,
+        });
+        setProductForm(emptyProductForm);
+        setEditingProductId(null);
+        setFormMessage("Product and variants saved.");
+        router.refresh();
+      } catch (error) {
+        setFormError(showError(error, "Product could not be saved."));
+      }
+    });
   }
 
   function startCategoryEdit(category: Category) {
@@ -312,76 +300,80 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
       setFormError("Enter a category name and slug.");
       return;
     }
-    if (
-      catalog.categories.some(
-        (category) => category.id !== editingCategoryId && category.slug === slug,
-      )
-    ) {
-      setFormError("Another category already uses that slug.");
+
+    startTransition(async () => {
+      try {
+        await saveCategoryAction({
+          id: editingCategoryId,
+          name,
+          slug,
+        });
+        setCategoryName("");
+        setCategorySlug("");
+        setEditingCategoryId(null);
+        setFormError("");
+        setFormMessage("Category saved.");
+        router.refresh();
+      } catch (error) {
+        setFormError(showError(error, "Category could not be saved."));
+      }
+    });
+  }
+
+  function removeProduct(product: Product) {
+    if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) {
       return;
     }
 
-    const existing = catalog.categories.find(
-      (category) => category.id === editingCategoryId,
-    );
-    const nextCategory: Category = existing
-      ? { ...existing, name, slug }
-      : {
-          id: globalThis.crypto.randomUUID(),
-          name,
-          slug,
-          parent_id: null,
-          image_url: null,
-          created_at: new Date().toISOString(),
-        };
-    const categories = existing
-      ? catalog.categories.map((category) =>
-          category.id === editingCategoryId ? nextCategory : category,
-        )
-      : [...catalog.categories, nextCategory];
-    if (saveCatalog({ ...catalog, categories })) {
-      setCategoryName("");
-      setCategorySlug("");
-      setEditingCategoryId(null);
-    }
+    startTransition(async () => {
+      try {
+        await deleteProductAction(product.id);
+        if (editingProductId === product.id) {
+          setEditingProductId(null);
+          setProductForm(emptyProductForm);
+        }
+        setFormError("");
+        setFormMessage("Product deleted.");
+        router.refresh();
+      } catch (error) {
+        setFormError(showError(error, "Product could not be deleted."));
+      }
+    });
   }
 
-  async function changeOrderStatus(orderNumber: string, status: OrderStatus) {
+  function changeOrderStatus(orderNumber: string, status: OrderStatus) {
     setOrderError("");
-    try {
-      const updatedOrder = await mockRepository.updateOrderStatus(orderNumber, status);
-      if (!updatedOrder) {
-        throw new Error(`Order ${orderNumber} was not found.`);
+    startTransition(async () => {
+      try {
+        await updateOrderStatusAction(orderNumber, status);
+        router.refresh();
+      } catch (error) {
+        setOrderError(showError(error, "Order status could not be changed."));
+        router.refresh();
       }
-      setOrders((current) =>
-        current.map((order) =>
-          order.order_number === orderNumber ? updatedOrder : order,
-        ),
-      );
-    } catch (error) {
-      console.error("Could not update demo order status.", error);
-      setOrderError(
-        error instanceof Error ? error.message : "Order status could not be changed.",
-      );
-    }
+    });
   }
 
   return (
     <Section>
       <Container>
-        <div className="mb-6 rounded-xl border border-red-500/50 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-900 dark:text-red-100">
-          DEMO ADMIN: not secured. Changes are mock data saved only in this browser.
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
               Seniors Enterprises
             </p>
             <h1 className="mt-1 font-display text-3xl font-semibold">Store admin</h1>
           </div>
-          <Link href="/" className="text-sm font-medium text-primary hover:underline">
-            View storefront
-          </Link>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link href="/" className="text-sm font-medium text-primary hover:underline">
+              View storefront
+            </Link>
+            <form action={logoutAdmin}>
+              <button type="submit" className={secondaryButtonClass}>
+                Log out
+              </button>
+            </form>
+          </div>
         </div>
 
         <nav
@@ -547,13 +539,13 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
                 />
               </AdminField>
               <AdminField
-                label="Variants (one size,color,stock row per line)"
+                label="Variants (size,color,stock,sku,price override)"
                 name="product-variants"
               >
                 <textarea
                   id="product-variants"
                   required
-                  rows={4}
+                  rows={5}
                   value={productForm.variants}
                   onChange={(event) =>
                     setProductForm((current) => ({
@@ -565,7 +557,7 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
                   className={inputClassName}
                 />
                 <span id="product-variants-help" className="text-xs text-muted-foreground">
-                  Example: M,Navy,4
+                  Example: M,Navy,4,SKU-001,2500. Leave SKU or price override empty to generate or use the product price.
                 </span>
               </AdminField>
               <label className="flex min-h-10 items-center gap-2 text-sm">
@@ -597,8 +589,8 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
                 Featured
               </label>
               <div className="flex flex-wrap gap-2">
-                <button type="submit" className={primaryButtonClass}>
-                  {editingProductId ? "Save product" : "Create product"}
+                <button type="submit" disabled={isPending} className={primaryButtonClass}>
+                  {isPending ? "Saving..." : editingProductId ? "Save product" : "Create product"}
                 </button>
                 {editingProductId ? (
                   <button
@@ -622,22 +614,35 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
               {catalog.products.map((product) => (
                 <article
                   key={product.id}
-                  className="flex flex-col justify-between gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center"
+                  className="grid gap-4 rounded-xl border border-border bg-surface p-4"
                 >
-                  <div>
-                    <h3 className="font-semibold">{product.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {formatKes(product.base_price_kes)} · {product.variants.length} variants ·{" "}
-                      {product.is_active ? "Active" : "Inactive"}
-                    </p>
+                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                    <div>
+                      <h3 className="font-semibold">{product.name}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {formatKes(product.base_price_kes)} · {product.variants.length} variants ·{" "}
+                        {product.images.length} images · {product.is_active ? "Active" : "Inactive"}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => startProductEdit(product)}
+                        className={secondaryButtonClass}
+                      >
+                        Edit product
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => removeProduct(product)}
+                        className={dangerButtonClass}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => startProductEdit(product)}
-                    className={secondaryButtonClass}
-                  >
-                    Edit product
-                  </button>
+                  <ProductImageUpload productId={product.id} />
                 </article>
               ))}
             </section>
@@ -672,7 +677,7 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
                 />
               </AdminField>
               <div className="flex flex-wrap gap-2">
-                <button type="submit" className={primaryButtonClass}>
+                <button type="submit" disabled={isPending} className={primaryButtonClass}>
                   {editingCategoryId ? "Save category" : "Create category"}
                 </button>
                 {editingCategoryId ? (
@@ -740,12 +745,15 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
                     <span className="font-medium">Order status</span>
                     <select
                       value={order.status}
-                      onChange={(event) =>
-                        void changeOrderStatus(
-                          order.order_number,
-                          event.target.value as OrderStatus,
-                        )
-                      }
+                      disabled={isPending}
+                      onChange={(event) => {
+                        const nextStatus = orderStatuses.find(
+                          (status) => status === event.target.value,
+                        );
+                        if (nextStatus) {
+                          changeOrderStatus(order.order_number, nextStatus);
+                        }
+                      }}
                       className={inputClassName}
                     >
                       {orderStatuses.map((status) => (
@@ -774,7 +782,7 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
                       <p>{order.phone}</p>
                       <p className="mt-2 text-muted-foreground">
                         {order.delivery_address.street}, {order.delivery_address.town},{" "}
-                        {order.delivery_address.county}
+                        {order.delivery_address.county}. Landmark: {order.delivery_address.landmark}
                       </p>
                     </div>
                     <ul className="grid gap-2">
@@ -790,13 +798,71 @@ export function AdminDashboard({ initialCatalog }: AdminDashboardProps) {
               </article>
             )) : (
               <p className="rounded-xl border border-border bg-surface p-5 text-sm text-muted-foreground">
-                No demo orders have been placed in this browser.
+                No orders have been placed yet.
               </p>
             )}
           </section>
         ) : null}
       </Container>
     </Section>
+  );
+}
+
+function ProductImageUpload({ productId }: { productId: string }) {
+  const router = useRouter();
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  function submitImage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.set("productId", productId);
+
+    startTransition(async () => {
+      try {
+        await uploadProductImage(formData);
+        form.reset();
+        setMessage("Image uploaded.");
+        router.refresh();
+      } catch (uploadError) {
+        setError(showError(uploadError, "Image could not be uploaded."));
+      }
+    });
+  }
+
+  return (
+    <form
+      onSubmit={submitImage}
+      className="grid gap-3 border-t border-border pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+    >
+      <label className="grid gap-1.5 text-sm font-medium">
+        Product image (JPG, PNG, or WebP; up to 5 MB)
+        <input
+          type="file"
+          name="file"
+          accept="image/jpeg,image/png,image/webp"
+          required
+          className="min-h-11 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm"
+        />
+      </label>
+      <label className="grid gap-1.5 text-sm font-medium">
+        Alt text
+        <input
+          name="altText"
+          maxLength={200}
+          className={inputClassName}
+        />
+      </label>
+      <button type="submit" disabled={isPending} className={secondaryButtonClass}>
+        {isPending ? "Uploading..." : "Upload image"}
+      </button>
+      {message ? <p role="status" className="text-sm text-emerald-800 dark:text-emerald-300">{message}</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-800 dark:text-red-200">{error}</p> : null}
+    </form>
   );
 }
 
@@ -829,6 +895,8 @@ function AdminField({
 const inputClassName =
   "min-h-11 w-full rounded-lg border border-border bg-background px-3 text-foreground";
 const primaryButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90";
+  "inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
 const secondaryButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold hover:bg-background";
+  "inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold hover:bg-background disabled:cursor-not-allowed disabled:opacity-60";
+const dangerButtonClass =
+  "inline-flex min-h-11 items-center justify-center rounded-lg border border-red-500/50 px-4 text-sm font-semibold text-red-800 hover:bg-red-500/10 dark:text-red-200 disabled:cursor-not-allowed disabled:opacity-60";
