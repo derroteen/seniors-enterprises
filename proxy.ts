@@ -6,7 +6,9 @@ import type { Database } from "@/types/database";
 
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/admin/login") {
-    return NextResponse.next();
+    return NextResponse.redirect(
+      new URL("/login?next=%2Fadmin", request.url),
+    );
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -36,7 +38,9 @@ export async function proxy(request: NextRequest) {
 
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    return NextResponse.redirect(
+      new URL("/login?next=%2Fadmin", request.url),
+    );
   }
 
   return response;

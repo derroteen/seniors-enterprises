@@ -3,6 +3,7 @@
 import { z } from "zod";
 
 import { checkoutFormSchema } from "@/lib/checkout/schema";
+import { getCurrentUserId } from "@/lib/auth/session";
 import { dataRepository } from "@/lib/data";
 import type { Order } from "@/lib/data/types";
 
@@ -60,7 +61,9 @@ export async function createCheckoutOrder(
 
   try {
     const { data } = parsed;
+    const userId = await getCurrentUserId();
     const order = await dataRepository.createOrder({
+      user_id: userId,
       customer_name: data.fullName,
       email: data.email,
       phone: data.phone,

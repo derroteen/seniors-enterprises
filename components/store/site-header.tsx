@@ -7,6 +7,7 @@ import { CartIcon, CloseIcon, MenuIcon } from "@/components/store/icons";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { HeaderSearch } from "@/components/store/header-search";
 import { Logo } from "@/components/store/logo";
+import { signOut } from "@/app/(store)/auth/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BRAND } from "@/lib/brand";
 import { getCartItemCount, useCartStore } from "@/lib/cart-store";
@@ -15,9 +16,15 @@ import { Container } from "@/components/ui/container";
 
 interface SiteHeaderProps {
   categories: Category[];
+  isSignedIn: boolean;
+  showDashboard: boolean;
 }
 
-export function SiteHeader({ categories }: SiteHeaderProps) {
+export function SiteHeader({
+  categories,
+  isSignedIn,
+  showDashboard,
+}: SiteHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const items = useCartStore((state) => state.items);
@@ -48,7 +55,12 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
             aria-label={`${BRAND.name} home`}
             className="block rounded-sm"
           >
-            <Logo variant="full" priority />
+            <span className="sm:hidden">
+              <Logo variant="mark" priority />
+            </span>
+            <span className="hidden sm:block">
+              <Logo variant="full" priority />
+            </span>
           </Link>
 
           <nav
@@ -73,6 +85,47 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
 
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0">
             <ThemeToggle />
+            {isSignedIn ? (
+              <details className="relative">
+                <summary
+                  aria-label="Account options"
+                  className="flex min-h-11 cursor-pointer list-none items-center rounded-lg border border-border bg-surface px-2 text-sm font-medium hover:bg-background sm:px-3 [&::-webkit-details-marker]:hidden"
+                >
+                  Account
+                </summary>
+                <div className="absolute right-0 top-full z-50 mt-2 grid w-48 gap-1 rounded-xl border border-border bg-surface p-2 shadow-lg">
+                  <Link
+                    href="/account"
+                    className="rounded-lg px-3 py-2.5 text-sm hover:bg-background"
+                  >
+                    My account
+                  </Link>
+                  {showDashboard ? (
+                    <Link
+                      href="/admin"
+                      className="rounded-lg px-3 py-2.5 text-sm hover:bg-background"
+                    >
+                      Dashboard
+                    </Link>
+                  ) : null}
+                  <form action={signOut}>
+                    <button
+                      type="submit"
+                      className="w-full rounded-lg px-3 py-2.5 text-left text-sm hover:bg-background"
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              </details>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-primary hover:bg-surface sm:px-3"
+              >
+                Sign in
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => setCartOpen(true)}

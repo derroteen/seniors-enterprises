@@ -269,7 +269,7 @@ export const mockRepository: StoreRepository = {
     const order: Order = {
       id: orderId,
       order_number: createOrderNumber(orders),
-      user_id: null,
+      user_id: input.user_id ?? null,
       customer_name: input.customer_name,
       email: input.email,
       phone: input.phone,

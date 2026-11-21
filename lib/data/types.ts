@@ -126,6 +126,7 @@ export interface SearchProduct {
 }
 
 export interface CreateOrderInput {
+  user_id?: string | null;
   customer_name: string;
   email: string;
   phone: string;

@@ -126,49 +126,6 @@ function getVariantFileType(type: string, bytes: Uint8Array) {
   return isWebp ? imageType : null;
 }
 
-export async function loginAdmin(formData: FormData) {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const password = String(formData.get("password") ?? "");
-  const credentials = z
-    .object({ email: z.email(), password: z.string().min(1).max(256) })
-    .safeParse({ email, password });
-
-  if (!credentials.success) {
-    redirect("/admin/login?error=credentials");
-  }
-
-  const supabase = await createClient();
-  const { error: signInError } = await supabase.auth.signInWithPassword(
-    credentials.data,
-  );
-  if (signInError) {
-    redirect("/admin/login?error=credentials");
-  }
-
-  const { data: userData, error: userError } = await supabase.auth.getUser();
-  if (userError || !userData.user) {
-    await supabase.auth.signOut();
-    redirect("/admin/login?error=unavailable");
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", userData.user.id)
-    .maybeSingle();
-
-  if (profileError) {
-    await supabase.auth.signOut();
-    redirect("/admin/login?error=unavailable");
-  }
-  if (profile?.role !== "admin") {
-    await supabase.auth.signOut();
-    redirect("/admin/login?error=not-admin");
-  }
-
-  redirect("/admin");
-}
-
 export async function logoutAdmin() {
   await requireAdminPage();
   const supabase = await createClient();
@@ -176,7 +133,7 @@ export async function logoutAdmin() {
   if (error) {
     throw new Error(`Could not sign out: ${error.message}`);
   }
-  redirect("/admin/login");
+  redirect("/login");
 }
 
 export async function saveProduct(input: unknown) {

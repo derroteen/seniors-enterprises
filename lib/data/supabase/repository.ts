@@ -440,7 +440,7 @@ export const supabaseRepository: StoreRepository = {
     const { data: order, error: orderError } = await adminClient
       .from("orders")
       .insert({
-        user_id: null,
+        user_id: input.user_id ?? null,
         customer_name: input.customer_name,
         email: input.email,
         phone: input.phone,

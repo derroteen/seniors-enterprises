@@ -41,7 +41,7 @@ async function getAdminIdentity(): Promise<{
 export async function requireAdminPage() {
   const { user, role } = await getAdminIdentity();
   if (!user) {
-    redirect("/admin/login");
+    redirect("/login?next=%2Fadmin");
   }
   if (role !== "admin") {
     notFound();

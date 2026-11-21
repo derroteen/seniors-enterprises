@@ -25,6 +25,12 @@ import { Section } from "@/components/ui/section";
 
 type FieldErrors = Partial<Record<keyof CheckoutFormValues, string>>;
 
+interface CheckoutCustomerPrefill {
+  fullName: string;
+  phone: string;
+  email: string;
+}
+
 const initialValues: Record<keyof CheckoutFormValues, string> = {
   fullName: "",
   email: "",
@@ -48,14 +54,23 @@ function getFieldErrors(
   return errors;
 }
 
-export function CheckoutForm() {
+export function CheckoutForm({
+  initialCustomer,
+}: {
+  initialCustomer: CheckoutCustomerPrefill | null;
+}) {
   const router = useRouter();
   const isDemoMode = process.env.NEXT_PUBLIC_PAYMENT_MODE === "demo";
   const isSupabaseSource =
     (process.env.NEXT_PUBLIC_DATA_SOURCE ?? "supabase") === "supabase";
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
-  const [values, setValues] = useState(initialValues);
+  const [values, setValues] = useState({
+    ...initialValues,
+    fullName: initialCustomer?.fullName ?? "",
+    phone: initialCustomer?.phone ?? "",
+    email: initialCustomer?.email ?? "",
+  });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [paymentOutcome, setPaymentOutcome] =
     useState<DemoPaymentOutcome>("success");
@@ -196,6 +211,17 @@ export function CheckoutForm() {
         )}
         <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
           <form onSubmit={submitCheckout} noValidate className="grid gap-6">
+            {!initialCustomer ? (
+              <p className="text-sm text-muted-foreground">
+                Already have an account?{" "}
+                <Link
+                  href="/login?next=%2Fcheckout"
+                  className="font-semibold text-primary hover:underline"
+                >
+                  Sign in to prefill your details
+                </Link>
+              </p>
+            ) : null}
             <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
               <h1 className="font-display text-3xl font-semibold">Checkout</h1>
               <h2 className="mt-6 text-lg font-semibold">Contact details</h2>
