@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { CartIcon, CloseIcon, MenuIcon } from "@/components/store/icons";
 import { CartDrawer } from "@/components/store/cart-drawer";
@@ -26,10 +26,24 @@ export function SiteHeader({
   showDashboard,
 }: SiteHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cartOpen, setCartOpen] = useState(false);
   const items = useCartStore((state) => state.items);
+  const cartOpen = useCartStore((state) => state.drawerOpen);
+  const openCartDrawer = useCartStore((state) => state.openDrawer);
+  const closeCartDrawer = useCartStore((state) => state.closeDrawer);
   const itemCount = getCartItemCount(items);
-  const closeCart = useCallback(() => setCartOpen(false), []);
+  const [badgeBumped, setBadgeBumped] = useState(false);
+  const previousItemCount = useRef(itemCount);
+
+  useEffect(() => {
+    if (previousItemCount.current === itemCount) {
+      return;
+    }
+
+    previousItemCount.current = itemCount;
+    setBadgeBumped(true);
+    const timer = window.setTimeout(() => setBadgeBumped(false), 350);
+    return () => window.clearTimeout(timer);
+  }, [itemCount]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
@@ -128,14 +142,18 @@ export function SiteHeader({
             )}
             <button
               type="button"
-              onClick={() => setCartOpen(true)}
+              onClick={() => openCartDrawer()}
               aria-label={`Open cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
               aria-expanded={cartOpen}
               aria-controls="cart-drawer-panel"
               className="relative grid size-11 place-items-center rounded-lg border border-border bg-surface text-foreground hover:bg-background"
             >
               <CartIcon className="size-5" />
-              <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-semibold leading-5 text-accent-foreground">
+              <span
+                className={`absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-accent px-1 text-[11px] font-semibold leading-5 text-accent-foreground motion-safe:transition-transform motion-safe:duration-300 motion-reduce:transform-none ${
+                  badgeBumped ? "scale-125" : "scale-100"
+                }`}
+              >
                 {itemCount}
               </span>
             </button>
@@ -170,7 +188,7 @@ export function SiteHeader({
           </nav>
         ) : null}
       </Container>
-      <CartDrawer open={cartOpen} onClose={closeCart} />
+      <CartDrawer open={cartOpen} onClose={closeCartDrawer} />
     </header>
   );
 }

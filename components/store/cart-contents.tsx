@@ -19,6 +19,9 @@ export function CartContents({
   const items = useCartStore((state) => state.items);
   const changeQuantity = useCartStore((state) => state.changeQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
+  const recentlyAddedVariantId = useCartStore(
+    (state) => state.highlightedVariantId,
+  );
   const subtotal = getCartSubtotal(items);
   const [stockWarning, setStockWarning] = useState("");
 
@@ -46,7 +49,11 @@ export function CartContents({
         {items.map((item) => (
           <li
             key={item.variantId}
-            className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 border-b border-border pb-4"
+            className={`grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 border-b border-border pb-4 ${
+              recentlyAddedVariantId === item.variantId
+                ? "rounded-lg bg-accent/10 ring-2 ring-accent/60"
+                : ""
+            }`}
           >
             <Link
               href={`/product/${item.productSlug}`}
