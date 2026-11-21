@@ -2,8 +2,8 @@
 
 The repository scan was case-insensitive, excluded `node_modules`, `.next`, and
 `.git`, and ran before T1 edits. It found 28 content matches across 11 files.
-No filenames contained “senior”. `AGENT_TASKS.md` already used the requested
-“Seniors Enterprises” spelling and was left unchanged.
+No filenames contained “senior”. `docs/overnight/AGENT_TASKS.md` already used
+the requested “Seniors Enterprises” spelling and was left unchanged.
 
 ## Brand matches
 

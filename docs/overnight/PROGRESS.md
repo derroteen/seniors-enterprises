@@ -3,7 +3,7 @@
 ## Setup
 
 - Confirmed current branch is `overnight/frontend`; worktree was clean.
-- Created `AGENT_TASKS.md` with the requested ordered checklist.
+- Created `docs/overnight/AGENT_TASKS.md` with the requested ordered checklist.
 - No application files or environment/database settings have been changed yet.
 
 ## Assumptions
@@ -28,7 +28,8 @@
   report in `docs/rename-report.md`.
 - Updated header/footer logo paths to the already-present official light/dark
   full-logo PNG assets; T2 will add the shared `Logo` component.
-- Files changed: `.env.example`, `AGENT_TASKS.md`, `PROGRESS.md`,
+- Files changed: `.env.example`, `docs/overnight/AGENT_TASKS.md`,
+  `docs/overnight/PROGRESS.md`,
   `docs/rename-report.md`, `lib/brand.ts`, `package.json`, `package-lock.json`,
   `app/layout.tsx`, `app/styleguide/page.tsx`, `app/(store)/page.tsx`,
   `app/(store)/shop/page.tsx`, `app/(store)/shop/[category]/page.tsx`,
@@ -48,7 +49,7 @@
   generated logo or icon files were present to delete.
 - Files changed: `components/store/logo.tsx`, `components/store/site-header.tsx`,
   `components/store/site-footer.tsx`, `app/manifest.ts`, `app/layout.tsx`,
-  `AGENT_TASKS.md`, `PROGRESS.md`.
+  `docs/overnight/AGENT_TASKS.md`, `docs/overnight/PROGRESS.md`.
 - To test: run all three required checks and inspect the manifest, logo in both
   themes, and Open Graph/Twitter metadata.
 
@@ -61,7 +62,8 @@
   the old query helper and generated-client type files.
 - Added exactly 24 unique mock products (12 shoes, 12 clothing), size/color
   variants including out-of-stock combinations, and local SVG placeholders.
-- Files changed: `.env.example`, `AGENT_TASKS.md`, `PROGRESS.md`,
+- Files changed: `.env.example`, `docs/overnight/AGENT_TASKS.md`,
+  `docs/overnight/PROGRESS.md`,
   `app/(store)/layout.tsx`, `app/(store)/page.tsx`,
   `app/(store)/shop/page.tsx`, `app/(store)/shop/[category]/page.tsx`,
   `app/(store)/product/[slug]/page.tsx`, `app/api/search/route.ts`,
@@ -93,7 +95,8 @@
   `components/store/cart-contents.tsx`, `components/store/cart-drawer.tsx`,
   `components/store/cart-page.tsx`, `components/store/site-header.tsx`,
   `components/store/product-purchase-panel.tsx`,
-  `app/(store)/cart/page.tsx`, `AGENT_TASKS.md`, `PROGRESS.md`.
+  `app/(store)/cart/page.tsx`, `docs/overnight/AGENT_TASKS.md`,
+  `docs/overnight/PROGRESS.md`.
 - To test: add a mock product variant to cart, open the drawer and `/cart`,
   reload to verify persistence, adjust quantities up to stock, remove a line,
   and verify subtotal/count updates.
@@ -113,7 +116,8 @@
   tracking link to the footer.
 - Added `zod` as a direct runtime dependency because checkout validation imports
   it; it was already installed in the project.
-- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, `package.json`,
+- Files changed: `docs/overnight/AGENT_TASKS.md`,
+  `docs/overnight/PROGRESS.md`, `package.json`,
   `package-lock.json`, `components/store/site-footer.tsx`,
   `components/store/checkout-form.tsx`,
   `components/store/checkout-result.tsx`,
@@ -144,7 +148,8 @@
 - Added a product question action that includes product name, selected size and
   color, current price, and the current product page URL. Added an order
   question link on successful checkout with the order number in its message.
-- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, `app/layout.tsx`,
+- Files changed: `docs/overnight/AGENT_TASKS.md`,
+  `docs/overnight/PROGRESS.md`, `app/layout.tsx`,
   `components/store/whatsapp-floating-button.tsx`,
   `components/store/product-purchase-panel.tsx`,
   `components/store/checkout-result.tsx`, and `lib/whatsapp.ts`.
@@ -166,7 +171,8 @@
   Existing demo orders are read and updated through the mock repository.
 - Added the visible “DEMO ADMIN: not secured” notice and a `/admin` layout guard
   that calls `notFound()` in production until real authentication is added.
-- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, `app/admin/layout.tsx`,
+- Files changed: `docs/overnight/AGENT_TASKS.md`,
+  `docs/overnight/PROGRESS.md`, `app/admin/layout.tsx`,
   `app/admin/page.tsx`, `components/admin/admin-dashboard.tsx`,
   `lib/admin/mock-catalog-storage.ts`, `lib/data/repository.ts`,
   `lib/data/mock/repository.ts`, and `lib/data/supabase/repository.ts`.
@@ -195,7 +201,8 @@
   horizontal overflow on home, shop, product, cart, checkout, tracking, and
   legal routes at 360px, 768px, and 1280px. Verified dark token colors and
   parsed the Product JSON-LD for a mock product.
-- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, `app/layout.tsx`,
+- Files changed: `docs/overnight/AGENT_TASKS.md`,
+  `docs/overnight/PROGRESS.md`, `app/layout.tsx`,
   `app/error.tsx`, `app/not-found.tsx`, `app/robots.ts`, `app/sitemap.ts`,
   `app/(store)/error.tsx`, `app/(store)/loading.tsx`,
   `app/(store)/page.tsx`, `app/(store)/product/[slug]/page.tsx`,
@@ -217,10 +224,12 @@
 
 ## T9 — Final report
 
-- Added `MORNING_REPORT.md` with completed work, blocked items, assumptions,
+- Added `docs/overnight/MORNING_REPORT.md` with completed work, blocked items,
+  assumptions,
   route inventory, run/test instructions, and remaining backend work.
 - Final validation passed: `npx tsc --noEmit`, `npm run lint`, and
   `npm run build`. The branch is `overnight/frontend`; T1–T8 are individually
   committed and there are no blocked tasks.
-- Files changed: `AGENT_TASKS.md`, `PROGRESS.md`, and `MORNING_REPORT.md`.
-- To test manually: follow the run/test steps in `MORNING_REPORT.md`.
+- Files changed: `docs/overnight/AGENT_TASKS.md`,
+  `docs/overnight/PROGRESS.md`, and `docs/overnight/MORNING_REPORT.md`.
+- To test manually: follow the run/test steps in `docs/overnight/MORNING_REPORT.md`.

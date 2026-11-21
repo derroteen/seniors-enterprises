@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,11 @@ const colorTokens = [
 ];
 
 export default function StyleguidePage() {
+  // The styleguide is a development-only reference, not a production page.
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   return (
     <main>
       <Section>
