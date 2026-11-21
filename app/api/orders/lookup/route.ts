@@ -17,9 +17,17 @@ const maxAttemptsPerWindow = 5;
 const attemptsByClient = new Map<string, { startedAt: number; count: number }>();
 
 function getClientKey(request: Request) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  const proxyIp = forwardedFor?.split(",")[0]?.trim();
-  return proxyIp || request.headers.get("x-real-ip")?.trim() || "unknown";
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) {
+    return realIp;
+  }
+
+  const forwardedAddresses = request.headers
+    .get("x-forwarded-for")
+    ?.split(",")
+    .map((address) => address.trim())
+    .filter(Boolean);
+  return forwardedAddresses?.at(-1) || "unknown";
 }
 
 function takeRateLimit(clientKey: string) {
