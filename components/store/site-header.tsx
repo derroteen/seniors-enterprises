@@ -77,6 +77,8 @@ export function SiteHeader({ categories }: SiteHeaderProps) {
               type="button"
               onClick={() => setCartOpen(true)}
               aria-label={`Open cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
+              aria-expanded={cartOpen}
+              aria-controls="cart-drawer-panel"
               className="relative grid size-11 place-items-center rounded-lg border border-border bg-surface text-foreground hover:bg-background"
             >
               <CartIcon className="size-5" />

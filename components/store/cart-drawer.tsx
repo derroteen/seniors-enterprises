@@ -1,9 +1,26 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { createPortal } from "react-dom";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 
 import { CloseIcon } from "@/components/store/icons";
 import { CartContents } from "@/components/store/cart-contents";
+import { getCartSubtotal, useCartStore } from "@/lib/cart-store";
+import { formatKes } from "@/lib/store-format";
+
+function subscribeToMount() {
+  return () => {};
+}
+
+function getClientMountSnapshot() {
+  return true;
+}
+
+function getServerMountSnapshot() {
+  return false;
+}
 
 interface CartDrawerProps {
   onClose: () => void;
@@ -11,11 +28,29 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ onClose, open }: CartDrawerProps) {
+  const isMounted = useSyncExternalStore(
+    subscribeToMount,
+    getClientMountSnapshot,
+    getServerMountSnapshot,
+  );
+  const pathname = usePathname();
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousPathnameRef = useRef(pathname);
+  const items = useCartStore((state) => state.items);
+  const subtotal = getCartSubtotal(items);
 
   useEffect(() => {
-    if (!open) {
+    if (previousPathnameRef.current !== pathname) {
+      previousPathnameRef.current = pathname;
+      if (open) {
+        onClose();
+      }
+    }
+  }, [onClose, open, pathname]);
+
+  useEffect(() => {
+    if (!open || !isMounted) {
       return;
     }
 
@@ -40,12 +75,16 @@ export function CartDrawer({ onClose, open }: CartDrawerProps) {
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
 
+      if (!first || !last) {
+        return;
+      }
+
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
-        last?.focus();
+        last.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
-        first?.focus();
+        first.focus();
       }
     }
 
@@ -53,30 +92,34 @@ export function CartDrawer({ onClose, open }: CartDrawerProps) {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = previousOverflow;
-      previousFocus?.focus();
+      if (previousFocus?.isConnected) {
+        previousFocus.focus();
+      }
     };
-  }, [onClose, open]);
+  }, [isMounted, onClose, open]);
 
-  if (!open) {
+  if (!open || !isMounted) {
     return null;
   }
 
-  return (
-    <div className="fixed inset-0 z-50">
+  return createPortal(
+    <div className="fixed inset-0 z-[100]">
       <button
         type="button"
         onClick={onClose}
         aria-label="Close cart drawer"
-        className="absolute inset-0 cursor-default bg-black/50"
+        className="fixed inset-0 z-[100] cursor-default bg-black/50"
       />
       <div
         ref={dialogRef}
+        id="cart-drawer-panel"
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-drawer-title"
-        className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col border-l border-border bg-background shadow-2xl"
+        tabIndex={-1}
+        className="fixed right-0 top-0 z-[101] flex h-dvh w-full max-w-md flex-col border-l border-border bg-background shadow-2xl"
       >
-        <div className="flex min-h-16 items-center justify-between border-b border-border px-5">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-5 pb-3 pt-[calc(env(safe-area-inset-top)_+_0.75rem)]">
           <h2 id="cart-drawer-title" className="font-display text-xl font-semibold">
             Your cart
           </h2>
@@ -90,10 +133,36 @@ export function CartDrawer({ onClose, open }: CartDrawerProps) {
             <CloseIcon className="size-5" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-5">
-          <CartContents onNavigate={onClose} />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
+          <CartContents onNavigate={onClose} showSummary={false} />
         </div>
+        <footer className="shrink-0 border-t border-border px-5 pb-[calc(env(safe-area-inset-bottom)_+_1rem)] pt-4">
+          <div className="flex items-center justify-between gap-4">
+            <span className="font-semibold">Subtotal</span>
+            <span className="text-lg font-semibold">{formatKes(subtotal)}</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Delivery is calculated at checkout.
+          </p>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Link
+              href="/cart"
+              onClick={onClose}
+              className="inline-flex min-h-12 items-center justify-center rounded-lg border border-border px-3 text-center text-sm font-semibold hover:bg-surface"
+            >
+              View cart
+            </Link>
+            <Link
+              href="/checkout"
+              onClick={onClose}
+              className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-3 text-center text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              Checkout
+            </Link>
+          </div>
+        </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

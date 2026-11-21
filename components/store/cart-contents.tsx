@@ -9,9 +9,13 @@ import { formatKes } from "@/lib/store-format";
 
 interface CartContentsProps {
   onNavigate?: () => void;
+  showSummary?: boolean;
 }
 
-export function CartContents({ onNavigate }: CartContentsProps) {
+export function CartContents({
+  onNavigate,
+  showSummary = true,
+}: CartContentsProps) {
   const items = useCartStore((state) => state.items);
   const changeQuantity = useCartStore((state) => state.changeQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
@@ -150,22 +154,24 @@ export function CartContents({ onNavigate }: CartContentsProps) {
         {stockWarning}
       </p>
 
-      <div className="mt-4 border-t border-border pt-4">
-        <div className="flex items-center justify-between gap-4">
-          <span className="font-semibold">Subtotal</span>
-          <span className="text-lg font-semibold">{formatKes(subtotal)}</span>
+      {showSummary ? (
+        <div className="mt-4 border-t border-border pt-4">
+          <div className="flex items-center justify-between gap-4">
+            <span className="font-semibold">Subtotal</span>
+            <span className="text-lg font-semibold">{formatKes(subtotal)}</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Delivery is calculated at checkout.
+          </p>
+          <Link
+            href="/checkout"
+            onClick={onNavigate}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            Continue to checkout
+          </Link>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Delivery is calculated at checkout.
-        </p>
-        <Link
-          href="/checkout"
-          onClick={onNavigate}
-          className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground hover:opacity-90"
-        >
-          Continue to checkout
-        </Link>
-      </div>
+      ) : null}
     </div>
   );
 }
