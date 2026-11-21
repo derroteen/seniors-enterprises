@@ -11,8 +11,12 @@ export async function GET(request: Request) {
     return Response.json({ suggestions });
   } catch (error) {
     console.error("Product search failed.", error);
+    const message =
+      process.env.NODE_ENV === "development" && error instanceof Error
+        ? error.message
+        : "Our catalog is temporarily unavailable. Please try again shortly or message us on WhatsApp.";
     return Response.json(
-      { message: "Search is temporarily unavailable." },
+      { message },
       { status: 500 },
     );
   }

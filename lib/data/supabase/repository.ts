@@ -17,7 +17,10 @@ import type {
 } from "@/lib/data/types";
 import { getDeliveryFee } from "@/lib/config/delivery";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient as createServerClient } from "@/lib/supabase/server";
+import {
+  createCatalogClient,
+  createClient as createServerClient,
+} from "@/lib/supabase/server";
 import type { Database, Tables } from "@/types/database";
 
 type ProductRow = Tables<"products">;
@@ -50,7 +53,7 @@ function sortSizes(sizes: string[]) {
 }
 
 async function getCategoryBySlug(slug: string) {
-  const client = await createServerClient();
+  const client = createCatalogClient();
   const { data, error } = await client
     .from("categories")
     .select("*")
@@ -184,7 +187,7 @@ async function getOrderRowByNumber(
 
 export const supabaseRepository: StoreRepository = {
   async getCategories() {
-    const client = await createServerClient();
+    const client = createCatalogClient();
     const { data, error } = await client
       .from("categories")
       .select("*")
@@ -197,7 +200,7 @@ export const supabaseRepository: StoreRepository = {
   getCategoryBySlug,
 
   async getProducts(filters, sort: ProductSort, page) {
-    const client = await createServerClient();
+    const client = createCatalogClient();
     let matchingProductIds: string[] | null = null;
 
     if (filters.categorySlug) {
@@ -270,7 +273,7 @@ export const supabaseRepository: StoreRepository = {
   },
 
   async getProductBySlug(slug) {
-    const client = await createServerClient();
+    const client = createCatalogClient();
     const { data, error } = await client
       .from("products")
       .select("*")
@@ -288,7 +291,7 @@ export const supabaseRepository: StoreRepository = {
   },
 
   async getFeaturedProducts(limit = 4) {
-    const client = await createServerClient();
+    const client = createCatalogClient();
     const { data, error } = await client
       .from("products")
       .select("*")
@@ -307,7 +310,7 @@ export const supabaseRepository: StoreRepository = {
       return [];
     }
 
-    const client = await createServerClient();
+    const client = createCatalogClient();
     const { data, error } = await client
       .from("products")
       .select("id, name, slug, base_price_kes")
@@ -343,7 +346,7 @@ export const supabaseRepository: StoreRepository = {
   },
 
   async getFilterOptions() {
-    const client = await createServerClient();
+    const client = createCatalogClient();
     const { data: activeProducts, error: productsError } = await client
       .from("products")
       .select("id")

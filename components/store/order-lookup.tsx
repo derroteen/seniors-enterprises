@@ -55,7 +55,7 @@ export function OrderLookup({ initialOrderNumber = "" }: OrderLookupProps) {
     setIsLoading(true);
     try {
       let result: LookupOrderResult | null;
-      if ((process.env.NEXT_PUBLIC_DATA_SOURCE ?? "mock") === "mock") {
+      if ((process.env.NEXT_PUBLIC_DATA_SOURCE ?? "supabase") === "mock") {
         const mockOrder = await mockRepository.getOrderByNumber(normalized, contact);
         result = mockOrder
           ? {

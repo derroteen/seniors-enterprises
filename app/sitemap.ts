@@ -1,13 +1,13 @@
 import type { MetadataRoute } from "next";
 
-import { mockRepository } from "@/lib/data/mock/repository";
+import { dataRepository } from "@/lib/data";
 import { getSiteUrl } from "@/lib/site-url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
   const [categories, products] = await Promise.all([
-    mockRepository.getCategories(),
-    mockRepository.getProducts({ pageSize: 100 }, "newest", 1),
+    dataRepository.getCategories(),
+    dataRepository.getProducts({ pageSize: 100 }, "newest", 1),
   ]);
   const staticRoutes = [
     "",

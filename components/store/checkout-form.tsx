@@ -52,7 +52,7 @@ export function CheckoutForm() {
   const router = useRouter();
   const isDemoMode = process.env.NEXT_PUBLIC_PAYMENT_MODE === "demo";
   const isSupabaseSource =
-    process.env.NEXT_PUBLIC_DATA_SOURCE === "supabase";
+    (process.env.NEXT_PUBLIC_DATA_SOURCE ?? "supabase") === "supabase";
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const [values, setValues] = useState(initialValues);

@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
+import { isSupabaseConfigured } from "./lib/supabase/config";
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseRemotePattern = supabaseUrl
+const supabaseRemotePattern = isSupabaseConfigured() && supabaseUrl
   ? (() => {
       const parsedUrl = new URL(supabaseUrl);
       if (parsedUrl.protocol === "https:") {

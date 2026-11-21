@@ -7,6 +7,7 @@ import { useEffect, useId, useState } from "react";
 
 import { SearchIcon } from "@/components/store/icons";
 import { formatKes } from "@/lib/store-format";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { SearchProduct } from "@/lib/data/types";
 
 type SearchState = "idle" | "loading" | "ready" | "unavailable";
@@ -85,6 +86,12 @@ export function HeaderSearch({ className = "" }: HeaderSearchProps) {
       searchState === "ready" ||
       searchState === "unavailable" ||
       suggestions.length > 0);
+  const supportUrl =
+    searchState === "unavailable"
+      ? getWhatsAppUrl(
+          "Hello, I am having trouble searching the product catalog. Please help.",
+        )
+      : null;
 
   return (
     <div className={`relative ${className}`}>
@@ -132,9 +139,19 @@ export function HeaderSearch({ className = "" }: HeaderSearchProps) {
             </p>
           ) : null}
           {searchState === "unavailable" ? (
-            <p className="px-4 py-3 text-sm text-muted-foreground">
-              {searchMessage}
-            </p>
+            <div className="px-4 py-3">
+              <p className="text-sm text-muted-foreground">{searchMessage}</p>
+              {supportUrl ? (
+                <a
+                  href={supportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex text-sm font-semibold text-primary hover:underline"
+                >
+                  Message us on WhatsApp
+                </a>
+              ) : null}
+            </div>
           ) : null}
           {searchState === "ready" && suggestions.length === 0 ? (
             <p className="px-4 py-3 text-sm text-muted-foreground">

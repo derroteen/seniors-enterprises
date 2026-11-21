@@ -81,7 +81,7 @@ export async function createCheckoutOrder(
       orderNumber: order.order_number,
       totalKes: order.total_kes,
       mockOrder:
-        (process.env.NEXT_PUBLIC_DATA_SOURCE ?? "mock") === "mock"
+        (process.env.NEXT_PUBLIC_DATA_SOURCE ?? "supabase") === "mock"
           ? order
           : null,
     };
@@ -98,7 +98,7 @@ export async function recordDemoPayment(input: unknown) {
   if (process.env.NEXT_PUBLIC_PAYMENT_MODE !== "demo") {
     return { ok: false, message: "Demo payments are disabled." };
   }
-  if ((process.env.NEXT_PUBLIC_DATA_SOURCE ?? "mock") !== "supabase") {
+  if ((process.env.NEXT_PUBLIC_DATA_SOURCE ?? "supabase") !== "supabase") {
     return { ok: false, message: "This action is only available for Supabase orders." };
   }
 

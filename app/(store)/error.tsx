@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/container";
+import { CatalogUnavailable } from "@/components/store/catalog-unavailable";
 
 export default function StoreError({
   error,
@@ -17,20 +16,11 @@ export default function StoreError({
   }, [error]);
 
   return (
-    <main className="py-20">
-      <Container>
-        <div className="mx-auto max-w-xl rounded-2xl border border-border bg-surface p-8 text-center">
-          <h1 className="font-display text-3xl font-semibold">
-            We couldn’t load the store
-          </h1>
-          <p className="mt-3 text-muted-foreground">
-            Please try again. If the problem continues, return to the shop later.
-          </p>
-          <Button onClick={reset} className="mt-6">
-            Try again
-          </Button>
-        </div>
-      </Container>
-    </main>
+    <CatalogUnavailable
+      errorMessage={
+        process.env.NODE_ENV === "development" ? error.message : undefined
+      }
+      onRetry={reset}
+    />
   );
 }
