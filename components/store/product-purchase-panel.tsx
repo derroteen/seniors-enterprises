@@ -316,11 +316,7 @@ export function ProductPurchasePanel({
                 : "Out of stock for this size and color."}
           </StatusMessage>
         </div>
-      ) : (
-        <p className="mt-5 text-sm text-muted-foreground">
-          Variant and stock information is not available yet.
-        </p>
-      )}
+      ) : null}
 
       <div className="mt-6 grid gap-3">
         {variants.length > 0 ? (

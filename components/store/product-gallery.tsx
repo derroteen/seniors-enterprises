@@ -47,15 +47,12 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
     return (
       <div
         role="img"
-        aria-label={`${productName} product images coming soon`}
+        aria-label={`${productName} product image`}
         className="grid aspect-[4/5] place-items-center rounded-2xl border border-border bg-surface text-center text-muted-foreground"
       >
-        <div>
-          <span className="font-display text-6xl text-primary/40" aria-hidden="true">
-            {productName.charAt(0)}
-          </span>
-          <p className="mt-2 text-sm">Product images coming soon</p>
-        </div>
+        <span className="font-display text-6xl text-primary/40" aria-hidden="true">
+          {productName.charAt(0)}
+        </span>
       </div>
     );
   }

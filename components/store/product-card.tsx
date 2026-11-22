@@ -36,13 +36,12 @@ export function ProductCard({ product }: ProductCardProps) {
           ) : (
             <div
               role="img"
-              aria-label={`${product.name} image coming soon`}
+              aria-label={`${product.name} product image`}
               className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground"
             >
               <span className="font-display text-5xl text-primary/40" aria-hidden="true">
                 {product.name.charAt(0)}
               </span>
-              <span className="text-xs">Image coming soon</span>
             </div>
           )}
           {discount ? (

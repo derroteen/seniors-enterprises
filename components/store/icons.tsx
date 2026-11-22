@@ -108,32 +108,6 @@ export function ZoomIcon(props: IconProps) {
   );
 }
 
-export function InstagramIcon(props: IconProps) {
-  return (
-    <svg {...iconAttributes} {...props}>
-      <rect x="3" y="3" width="18" height="18" rx="5" />
-      <circle cx="12" cy="12" r="4" />
-      <path d="M17.5 6.5h.01" />
-    </svg>
-  );
-}
-
-export function FacebookIcon(props: IconProps) {
-  return (
-    <svg {...iconAttributes} {...props}>
-      <path d="M14 21v-8h3l.5-3H14V8c0-.9.3-1.5 1.6-1.5h2V3.8c-.4-.1-1.6-.2-2.7-.2-2.7 0-4.5 1.6-4.5 4.6V10H7.5v3h2.9v8H14Z" />
-    </svg>
-  );
-}
-
-export function TikTokIcon(props: IconProps) {
-  return (
-    <svg {...iconAttributes} {...props}>
-      <path d="M14 4v10.5a4.5 4.5 0 1 1-4-4.5M14 4c.5 3 2.5 4.8 5.5 5" />
-    </svg>
-  );
-}
-
 export function WhatsAppIcon(props: IconProps) {
   return (
     <svg {...iconAttributes} {...props}>
