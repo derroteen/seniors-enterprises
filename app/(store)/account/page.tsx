@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getAccountOrders } from "@/lib/account/data";
+import { BRAND } from "@/lib/brand";
 import { formatKes } from "@/lib/store-format";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
@@ -9,7 +10,7 @@ import { StatusBadge } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
   title: "My account",
-  description: "View your Seniors Enterprises orders.",
+  description: `View your ${BRAND.name} orders.`,
 };
 
 export default async function AccountPage() {

@@ -71,34 +71,6 @@ export function ChevronRightIcon(props: IconProps) {
   );
 }
 
-export function QualityIcon(props: IconProps) {
-  return (
-    <svg {...iconAttributes} {...props}>
-      <path d="m12 3 2.2 2.2 3.1-.1.9 3 2.5 1.8-1 3 1 3-2.5 1.8-.9 3-3.1-.1L12 23l-2.2-2.2-3.1.1-.9-3L3.3 16l1-3-1-3 2.5-1.8.9-3 3.1.1L12 3Z" />
-      <path d="m8.5 12.2 2.2 2.2 4.8-4.8" />
-    </svg>
-  );
-}
-
-export function DeliveryIcon(props: IconProps) {
-  return (
-    <svg {...iconAttributes} {...props}>
-      <path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z" />
-      <circle cx="7.5" cy="18.5" r="1.5" />
-      <circle cx="18" cy="18.5" r="1.5" />
-    </svg>
-  );
-}
-
-export function SecureIcon(props: IconProps) {
-  return (
-    <svg {...iconAttributes} {...props}>
-      <rect x="4" y="10" width="16" height="11" rx="2" />
-      <path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3" />
-    </svg>
-  );
-}
-
 export function ZoomIcon(props: IconProps) {
   return (
     <svg {...iconAttributes} {...props}>

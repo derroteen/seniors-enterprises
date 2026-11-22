@@ -487,9 +487,7 @@ export function CheckoutForm({
                 <dt className="text-muted-foreground">
                   Delivery{selectedCounty ? ` · ${selectedCounty.name}` : ""}
                 </dt>
-                <dd className="font-medium">
-                  {values.county ? formatKes(deliveryFee) : "Select county"}
-                </dd>
+                <dd className="font-medium">Free</dd>
               </div>
               <div className="flex justify-between gap-4 border-t border-border pt-3 text-base font-semibold">
                 <dt>Total</dt>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Logo } from "@/components/store/logo";
 import { BRAND } from "@/lib/brand";
 import type { Category } from "@/lib/data/types";
+import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { Container } from "@/components/ui/container";
 
 interface SiteFooterProps {
@@ -10,10 +11,14 @@ interface SiteFooterProps {
 }
 
 export function SiteFooter({ categories }: SiteFooterProps) {
+  const whatsappUrl = getWhatsAppUrl(
+    `Hello, I have a question about ${BRAND.name}.`,
+  );
+
   return (
     <footer className="border-t border-border bg-surface">
       <Container>
-        <div className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-3">
           <div className="sm:col-span-2 lg:col-span-1">
             <Link href="/" aria-label={`${BRAND.name} home`}>
               <Logo variant="full" className="h-10 w-32" />
@@ -47,31 +52,26 @@ export function SiteFooter({ categories }: SiteFooterProps) {
           </div>
 
           <div>
-            <h2 className="text-sm font-semibold">About</h2>
-            <ul className="mt-4 grid gap-3 text-sm text-muted-foreground">
-              <li>
-                <Link href="/#why-seniors" className="hover:text-primary">
-                  Why {BRAND.name}
-                </Link>
-              </li>
-              <li>
-                <Link href="/#categories" className="hover:text-primary">
-                  Our collections
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
             <h2 className="text-sm font-semibold">Customer care</h2>
             <ul className="mt-4 grid gap-3 text-sm text-muted-foreground">
               <li><Link href="/privacy" className="hover:text-primary">Privacy</Link></li>
               <li><Link href="/terms" className="hover:text-primary">Terms</Link></li>
               <li><Link href="/returns" className="hover:text-primary">Returns</Link></li>
               <li><Link href="/delivery" className="hover:text-primary">Delivery</Link></li>
+              {whatsappUrl ? (
+                <li>
+                  <a
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-primary"
+                  >
+                    WhatsApp
+                  </a>
+                </li>
+              ) : null}
             </ul>
           </div>
-
         </div>
 
         <div className="border-t border-border py-5 text-xs text-muted-foreground">

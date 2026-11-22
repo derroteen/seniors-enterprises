@@ -142,7 +142,7 @@ export function CartDrawer({ onClose, open }: CartDrawerProps) {
             <span className="text-lg font-semibold">{formatKes(subtotal)}</span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Delivery is calculated at checkout.
+            Free delivery countrywide.
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Link

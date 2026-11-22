@@ -23,16 +23,16 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: `${BRAND.name} | Considered everyday essentials`,
+    default: `${BRAND.name} | Shop online`,
     template: `%s | ${BRAND.name}`,
   },
-  description: `Shop thoughtfully selected everyday essentials from ${BRAND.name}.`,
+  description: `Browse products from ${BRAND.name}.`,
   openGraph: {
     type: "website",
     locale: "en_KE",
     siteName: BRAND.name,
-    title: `${BRAND.name} | Considered everyday essentials`,
-    description: `Shop thoughtfully selected everyday essentials from ${BRAND.name}.`,
+    title: `${BRAND.name} | Shop online`,
+    description: `Browse products from ${BRAND.name}.`,
     images: [
       {
         url: "/og-image.png",
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${BRAND.name} | Considered everyday essentials`,
-    description: `Shop thoughtfully selected everyday essentials from ${BRAND.name}.`,
+    title: `${BRAND.name} | Shop online`,
+    description: `Browse products from ${BRAND.name}.`,
     images: ["/og-image.png"],
   },
 };

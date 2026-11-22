@@ -173,7 +173,7 @@ export function CartContents({
             <span className="text-lg font-semibold">{formatKes(subtotal)}</span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Delivery is calculated at checkout.
+            Free delivery countrywide.
           </p>
           <Link
             href="/checkout"

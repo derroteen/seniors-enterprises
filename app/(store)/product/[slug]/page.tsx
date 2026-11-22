@@ -24,7 +24,7 @@ export async function generateMetadata({
     title: product?.name ?? "Product",
     description:
       product?.description ??
-      `Explore thoughtfully selected everyday essentials from ${BRAND.name}.`,
+      `Browse products from ${BRAND.name}.`,
   };
 }
 

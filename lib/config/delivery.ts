@@ -1,14 +1,14 @@
 import { findKenyanCounty } from "@/lib/config/kenya-locations";
 
+// Delivery is free countrywide by owner decision. The per-county lookup is kept
+// so a fee can be reintroduced in one place later.
 export const DELIVERY_FEES_KES = {
-  nairobi: 350,
-  otherCounties: 650,
+  nairobi: 0,
+  otherCounties: 0,
 } as const;
 
 // Add county slugs or "county-slug:town-slug" keys here for future fee overrides.
-const deliveryFeeOverridesKes: Record<string, number> = {
-  nairobi: DELIVERY_FEES_KES.nairobi,
-};
+const deliveryFeeOverridesKes: Record<string, number> = {};
 
 function slugifyTown(town: string) {
   return town
