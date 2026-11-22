@@ -10,9 +10,11 @@ function mapDeliveryAddress(value: Tables<"orders">["delivery_address"]): Delive
     throw new Error("An order has an invalid delivery address.");
   }
 
-  const { county, town, street, landmark } = value;
+  const { county, county_code, town, street, landmark } = value;
   if (
     typeof county !== "string" ||
+    (county_code !== undefined &&
+      (typeof county_code !== "number" || !Number.isInteger(county_code))) ||
     typeof town !== "string" ||
     typeof street !== "string" ||
     typeof landmark !== "string"
@@ -20,7 +22,13 @@ function mapDeliveryAddress(value: Tables<"orders">["delivery_address"]): Delive
     throw new Error("An order has an incomplete delivery address.");
   }
 
-  return { county, town, street, landmark };
+  return {
+    county,
+    ...(typeof county_code === "number" ? { county_code } : {}),
+    town,
+    street,
+    landmark,
+  };
 }
 
 export async function getAdminDashboardData() {

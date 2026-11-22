@@ -16,6 +16,7 @@ import type {
   UpdateOrderPaymentInput,
 } from "@/lib/data/types";
 import { getDeliveryFee } from "@/lib/config/delivery";
+import { getKenyanCountyByName } from "@/lib/config/kenya-locations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   createCatalogClient,
@@ -28,6 +29,7 @@ type OrderRow = Tables<"orders">;
 
 const deliveryAddressSchema = z.object({
   county: z.string(),
+  county_code: z.number().int().min(1).max(47).optional(),
   town: z.string(),
   street: z.string(),
   landmark: z.string(),
@@ -435,7 +437,16 @@ export const supabaseRepository: StoreRepository = {
       (subtotal, item) => subtotal + item.unit_price_kes * item.quantity,
       0,
     );
-    const deliveryFeeKes = getDeliveryFee(input.delivery_address.county);
+    const county =
+      input.delivery_address.county_code !== undefined
+        ? undefined
+        : getKenyanCountyByName(input.delivery_address.county);
+    const countyCode =
+      input.delivery_address.county_code ?? county?.code;
+    const deliveryFeeKes = getDeliveryFee(
+      String(countyCode ?? input.delivery_address.county),
+      input.delivery_address.town,
+    );
     const deliveryAddress: DeliveryAddress = input.delivery_address;
     const { data: order, error: orderError } = await adminClient
       .from("orders")
@@ -446,6 +457,7 @@ export const supabaseRepository: StoreRepository = {
         phone: input.phone,
         delivery_address: {
           county: deliveryAddress.county,
+          ...(countyCode !== undefined ? { county_code: countyCode } : {}),
           town: deliveryAddress.town,
           street: deliveryAddress.street,
           landmark: deliveryAddress.landmark,

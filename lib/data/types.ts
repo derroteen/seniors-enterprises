@@ -54,6 +54,7 @@ export interface Product {
 
 export interface DeliveryAddress {
   county: string;
+  county_code?: number;
   town: string;
   street: string;
   landmark: string;

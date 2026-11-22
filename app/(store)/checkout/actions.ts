@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { checkoutFormSchema } from "@/lib/checkout/schema";
 import { getCurrentUserId } from "@/lib/auth/session";
+import { getKenyanCountyByName } from "@/lib/config/kenya-locations";
 import { dataRepository } from "@/lib/data";
 import type { Order } from "@/lib/data/types";
 
@@ -61,6 +62,11 @@ export async function createCheckoutOrder(
 
   try {
     const { data } = parsed;
+    const county = getKenyanCountyByName(data.county);
+    if (!county) {
+      return { ok: false, message: "Select a county from the list." };
+    }
+
     const userId = await getCurrentUserId();
     const order = await dataRepository.createOrder({
       user_id: userId,
@@ -68,7 +74,8 @@ export async function createCheckoutOrder(
       email: data.email,
       phone: data.phone,
       delivery_address: {
-        county: data.county,
+        county: county.name,
+        county_code: county.code,
         town: data.town,
         street: data.street,
         landmark: data.landmark,

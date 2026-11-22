@@ -265,7 +265,10 @@ export const mockRepository: StoreRepository = {
       (subtotal, item) => subtotal + item.unit_price_kes * item.quantity,
       0,
     );
-    const deliveryFeeKes = getDeliveryFee(input.delivery_address.county);
+    const deliveryFeeKes = getDeliveryFee(
+      String(input.delivery_address.county_code ?? input.delivery_address.county),
+      input.delivery_address.town,
+    );
     const order: Order = {
       id: orderId,
       order_number: createOrderNumber(orders),

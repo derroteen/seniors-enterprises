@@ -14,15 +14,17 @@ import {
   checkoutFormSchema,
   type CheckoutFormValues,
 } from "@/lib/checkout/schema";
-import { getDeliveryFee, KENYAN_COUNTIES } from "@/lib/config/delivery";
+import { getDeliveryFee } from "@/lib/config/delivery";
 import { mockRepository, saveMockOrder } from "@/lib/data/mock/repository";
 import type { DemoPaymentOutcome } from "@/lib/payments/types";
 import { mockPaymentProvider } from "@/lib/payments/mock";
 import { formatKes } from "@/lib/store-format";
 import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { StatusIcon, StatusMessage } from "@/components/ui/status-message";
+import { KENYA_COUNTIES } from "@/lib/config/kenya-locations";
 
 type FieldErrors = Partial<Record<keyof CheckoutFormValues, string>>;
 
@@ -73,19 +75,43 @@ export function CheckoutForm({
     email: initialCustomer?.email ?? "",
   });
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [countyInput, setCountyInput] = useState("");
   const [paymentOutcome, setPaymentOutcome] =
     useState<DemoPaymentOutcome>("success");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const subtotal = getCartSubtotal(items);
-  const deliveryFee = values.county ? getDeliveryFee(values.county) : 0;
+  const deliveryFee = values.county
+    ? getDeliveryFee(values.county, values.town)
+    : 0;
+  const selectedCounty = KENYA_COUNTIES.find(
+    (county) => county.name === values.county,
+  );
   const total = subtotal + deliveryFee;
 
   function updateField(field: keyof CheckoutFormValues, value: string) {
     setValues((current) => ({ ...current, [field]: value }));
     setErrors((current) => ({ ...current, [field]: undefined }));
     setFormError("");
+  }
+
+  function updateCountyInput(value: string) {
+    setCountyInput(value);
+    setErrors((current) => ({ ...current, county: undefined }));
+    setFormError("");
+    if (values.county && value !== values.county) {
+      updateField("county", "");
+      updateField("town", "");
+    }
+  }
+
+  function selectCounty(countyName: string) {
+    if (values.county !== countyName) {
+      updateField("town", "");
+    }
+    updateField("county", countyName);
+    setCountyInput(countyName);
   }
 
   async function submitCheckout(event: FormEvent<HTMLFormElement>) {
@@ -302,52 +328,34 @@ export function CheckoutForm({
             <section className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Delivery address</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="grid gap-1.5">
-                  <label htmlFor="checkout-county" className="text-sm font-medium">
-                    County
-                  </label>
-                  <select
-                    id="checkout-county"
-                    name="county"
-                    autoComplete="address-level1"
-                    value={values.county}
-                    onChange={(event) => updateField("county", event.target.value)}
-                    aria-invalid={Boolean(errors.county)}
-                    aria-describedby={errors.county ? "checkout-county-error" : undefined}
-                    className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
-                  >
-                    <option value="">Select county</option>
-                    {KENYAN_COUNTIES.map((county) => (
-                      <option key={county} value={county}>{county}</option>
-                    ))}
-                  </select>
-                  {errors.county ? (
-                    <StatusMessage id="checkout-county-error" tone="danger">
-                      {errors.county}
-                    </StatusMessage>
-                  ) : null}
-                </div>
+                <Combobox
+                  id="checkout-county"
+                  label="County"
+                  autoComplete="address-level1"
+                  inputValue={countyInput}
+                  options={KENYA_COUNTIES.map((county) => county.name)}
+                  onInputValueChange={updateCountyInput}
+                  onSelect={selectCounty}
+                  error={errors.county}
+                  placeholder="Search counties"
+                />
 
-                <div className="grid gap-1.5">
-                  <label htmlFor="checkout-town" className="text-sm font-medium">
-                    Town or area
-                  </label>
-                  <input
-                    id="checkout-town"
-                    name="town"
-                    autoComplete="address-level2"
-                    value={values.town}
-                    onChange={(event) => updateField("town", event.target.value)}
-                    aria-invalid={Boolean(errors.town)}
-                    aria-describedby={errors.town ? "checkout-town-error" : undefined}
-                    className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
-                  />
-                  {errors.town ? (
-                    <StatusMessage id="checkout-town-error" tone="danger">
-                      {errors.town}
-                    </StatusMessage>
-                  ) : null}
-                </div>
+                <Combobox
+                  id="checkout-town"
+                  label="Town or area"
+                  autoComplete="address-level2"
+                  inputValue={values.town}
+                  options={selectedCounty?.towns ?? []}
+                  onInputValueChange={(town) => updateField("town", town)}
+                  onSelect={(town) => updateField("town", town)}
+                  disabled={!selectedCounty}
+                  freeform
+                  hint="Can't find your town? Type it in."
+                  error={errors.town}
+                  placeholder={
+                    selectedCounty ? "Search or type your town" : "Choose a county first"
+                  }
+                />
 
                 <div className="grid gap-1.5">
                   <label htmlFor="checkout-street" className="text-sm font-medium">
@@ -477,7 +485,7 @@ export function CheckoutForm({
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-muted-foreground">
-                  Delivery{values.county ? ` · ${values.county}` : ""}
+                  Delivery{selectedCounty ? ` · ${selectedCounty.name}` : ""}
                 </dt>
                 <dd className="font-medium">
                   {values.county ? formatKes(deliveryFee) : "Select county"}
