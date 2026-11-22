@@ -5,6 +5,7 @@ import { getAccountOrders } from "@/lib/account/data";
 import { formatKes } from "@/lib/store-format";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
+import { StatusBadge } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
   title: "My account",
@@ -50,9 +51,9 @@ export default async function AccountPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">{formatKes(order.totalKes)}</p>
-                        <p className="mt-1 text-sm capitalize text-muted-foreground">
-                          {order.status}
-                        </p>
+                        <div className="mt-1">
+                          <StatusBadge status={order.status} />
+                        </div>
                       </div>
                     </div>
                     <ul className="mt-4 grid gap-2 border-t border-border pt-3 text-sm">

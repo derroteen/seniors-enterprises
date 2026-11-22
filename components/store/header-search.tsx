@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 
 import { SearchIcon } from "@/components/store/icons";
+import { StatusIcon } from "@/components/ui/status-message";
 import { formatKes } from "@/lib/store-format";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import type { SearchProduct } from "@/lib/data/types";
@@ -98,7 +99,7 @@ export function HeaderSearch({ className = "" }: HeaderSearchProps) {
       <form
         role="search"
         onSubmit={submitSearch}
-        className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-3"
+        className="flex min-h-11 items-center gap-2 rounded-xl border border-strong bg-surface px-3"
       >
         <SearchIcon className="size-5 shrink-0 text-muted-foreground" />
         <label className="sr-only" htmlFor={inputId}>
@@ -134,13 +135,17 @@ export function HeaderSearch({ className = "" }: HeaderSearchProps) {
           aria-live="polite"
         >
           {searchState === "loading" ? (
-            <p className="px-4 py-3 text-sm text-muted-foreground">
+            <p className="flex items-start gap-2 px-4 py-3 text-sm text-muted-foreground">
+              <StatusIcon tone="muted" />
               Searching…
             </p>
           ) : null}
           {searchState === "unavailable" ? (
             <div className="px-4 py-3">
-              <p className="text-sm text-muted-foreground">{searchMessage}</p>
+              <p className="flex items-start gap-2 text-sm text-danger">
+                <StatusIcon tone="danger" />
+                {searchMessage}
+              </p>
               {supportUrl ? (
                 <a
                   href={supportUrl}
@@ -154,7 +159,8 @@ export function HeaderSearch({ className = "" }: HeaderSearchProps) {
             </div>
           ) : null}
           {searchState === "ready" && suggestions.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-muted-foreground">
+            <p className="flex items-start gap-2 px-4 py-3 text-sm text-info">
+              <StatusIcon tone="info" />
               No matching products.
             </p>
           ) : null}

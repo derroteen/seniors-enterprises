@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { WhatsAppIcon } from "@/components/store/icons";
 import { Button } from "@/components/ui/button";
+import { StatusIcon, StatusMessage } from "@/components/ui/status-message";
 import type { Product, ProductVariant } from "@/lib/data/types";
 import { useCartStore } from "@/lib/cart-store";
 import { formatKes, getDiscountPercent } from "@/lib/store-format";
@@ -234,7 +235,19 @@ export function ProductPurchasePanel({
                     }`}
                   >
                     {size}
-                    <span className="text-[10px] leading-4">
+                    <span
+                      className={`inline-flex items-center gap-1 text-[10px] leading-4 ${
+                        selectedSize === size
+                          ? "text-primary-foreground"
+                          : matchingVariant?.stock_quantity
+                            ? "text-success"
+                            : "text-muted-foreground"
+                      }`}
+                    >
+                      <StatusIcon
+                        className="size-3"
+                        tone={matchingVariant?.stock_quantity ? "success" : "muted"}
+                      />
                       {matchingVariant?.stock_quantity
                         ? `${matchingVariant.stock_quantity} left`
                         : "Sold out"}
@@ -273,7 +286,19 @@ export function ProductPurchasePanel({
                   }`}
                 >
                   <span className="block">{variant.color}</span>
-                  <span className="block text-[10px] leading-4">
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] leading-4 ${
+                      selectedColor === variant.color
+                        ? "text-primary-foreground"
+                        : variant.stock_quantity > 0
+                          ? "text-success"
+                          : "text-muted-foreground"
+                    }`}
+                  >
+                    <StatusIcon
+                      className="size-3"
+                      tone={variant.stock_quantity > 0 ? "success" : "muted"}
+                    />
                     {variant.stock_quantity > 0
                       ? `${variant.stock_quantity} in stock`
                       : "Sold out"}
@@ -283,18 +308,13 @@ export function ProductPurchasePanel({
             </div>
           </fieldset>
 
-          <p
-            role="status"
-            className={`text-sm font-medium ${
-              isInStock ? "text-emerald-700 dark:text-emerald-300" : "text-red-700 dark:text-red-300"
-            }`}
-          >
+          <StatusMessage tone={isInStock ? "success" : "danger"} className="font-medium">
             {!selectedVariant
               ? "This size and color combination is unavailable."
               : selectedVariant.stock_quantity > 0
                 ? `${selectedVariant.stock_quantity} in stock`
                 : "Out of stock for this size and color."}
-          </p>
+          </StatusMessage>
         </div>
       ) : (
         <p className="mt-5 text-sm text-muted-foreground">
@@ -312,7 +332,7 @@ export function ProductPurchasePanel({
               Quantity
             </label>
             <div
-              className="inline-flex min-h-11 items-center rounded-lg border border-border"
+              className="inline-flex min-h-11 items-center rounded-lg border border-strong"
               role="group"
               aria-label={`Quantity for ${product.name}`}
             >
@@ -324,7 +344,7 @@ export function ProductPurchasePanel({
                 }}
                 aria-label={`Decrease quantity for ${product.name}`}
                 disabled={!isInStock || quantity <= 1 || addFeedback !== "idle"}
-                className="grid size-11 place-items-center rounded-l-lg text-lg hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid size-11 place-items-center rounded-l-lg text-lg hover:bg-background disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-80"
               >
                 −
               </button>
@@ -353,7 +373,7 @@ export function ProductPurchasePanel({
                 }}
                 aria-label={`Quantity to add for ${product.name}`}
                 disabled={!isInStock || addFeedback !== "idle"}
-                className="h-11 w-14 border-x border-border bg-transparent text-center text-sm tabular-nums outline-none disabled:opacity-50"
+                className="h-11 w-14 border-x border-strong bg-transparent text-center text-sm tabular-nums outline-none disabled:text-muted-foreground disabled:opacity-80"
               />
               <button
                 type="button"
@@ -372,7 +392,7 @@ export function ProductPurchasePanel({
                   quantity >= (selectedVariant?.stock_quantity ?? 0) ||
                   addFeedback !== "idle"
                 }
-                className="grid size-11 place-items-center rounded-r-lg text-lg hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
+                className="grid size-11 place-items-center rounded-r-lg text-lg hover:bg-background disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-80"
               >
                 +
               </button>
@@ -413,7 +433,10 @@ export function ProductPurchasePanel({
           ) : isInStock ? (
             "Add to cart"
           ) : (
-            "Out of stock"
+            <>
+              <StatusIcon tone="muted" />
+              Out of stock
+            </>
           )}
         </Button>
         {cartQuantity > 0 ? (
@@ -425,13 +448,9 @@ export function ProductPurchasePanel({
           </p>
         ) : null}
         {cartMessage || cartLimitMessage ? (
-          <p
-            role="status"
-            aria-live="polite"
-            className="text-center text-sm font-medium text-amber-900 dark:text-amber-200"
-          >
+          <StatusMessage tone="warning" className="justify-center text-center font-medium">
             {cartMessage || cartLimitMessage}
-          </p>
+          </StatusMessage>
         ) : null}
         {hasWhatsAppContact ? (
           <Button

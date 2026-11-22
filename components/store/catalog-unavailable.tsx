@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { StatusMessage } from "@/components/ui/status-message";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 
 interface CatalogUnavailableProps {
@@ -34,11 +35,11 @@ export function CatalogUnavailable({
           >
             {isDevelopment ? "Catalog request failed" : "Our catalog is temporarily unavailable"}
           </h1>
-          <p className="mt-3 text-muted-foreground">
+          <StatusMessage tone="danger" className="mt-3">
             {isDevelopment
               ? "The catalog could not be loaded. See the error details below."
               : productionMessage}
-          </p>
+          </StatusMessage>
           {isDevelopment && errorMessage ? (
             <pre className="mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded-lg bg-background p-3 text-left text-xs">
               {errorMessage}

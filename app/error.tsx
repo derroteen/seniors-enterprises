@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { StatusMessage } from "@/components/ui/status-message";
 
 export default function GlobalError({
   error,
@@ -24,9 +25,9 @@ export default function GlobalError({
           <h1 className="font-display text-3xl font-semibold">
             Something went wrong
           </h1>
-          <p className="mt-3 text-muted-foreground">
+          <StatusMessage tone="danger" className="mt-3 justify-center">
             Please try again. If the problem continues, return to the home page.
-          </p>
+          </StatusMessage>
           <div className="mt-6 flex justify-center gap-3">
             <Button onClick={reset}>Try again</Button>
             <Link

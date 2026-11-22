@@ -1,5 +1,7 @@
 import { useId, type InputHTMLAttributes } from "react";
 
+import { StatusMessage } from "@/components/ui/status-message";
+
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
@@ -21,13 +23,13 @@ export function Input({ className = "", error, id, label, ...props }: InputProps
         id={inputId}
         aria-invalid={error ? true : undefined}
         aria-describedby={errorId ?? props["aria-describedby"]}
-        className={`min-h-11 w-full rounded-lg border border-border bg-surface px-3 text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+        className={`min-h-11 w-full rounded-lg border border-strong bg-surface px-3 text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100 ${className}`}
         {...props}
       />
       {error ? (
-        <p id={errorId} className="text-sm text-red-700 dark:text-red-300">
+        <StatusMessage id={errorId} tone="danger" className="text-sm">
           {error}
-        </p>
+        </StatusMessage>
       ) : null}
     </div>
   );

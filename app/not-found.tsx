@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
+import { StatusIcon } from "@/components/ui/status-message";
 
 export default function NotFound() {
   return (
@@ -9,7 +10,8 @@ export default function NotFound() {
       <Section>
         <Container>
           <div className="mx-auto max-w-xl rounded-2xl border border-border bg-surface p-8 text-center">
-            <p className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
+            <p className="flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-[0.15em] text-info">
+              <StatusIcon tone="info" />
               404 · Page not found
             </p>
             <h1 className="mt-3 font-display text-3xl font-semibold">

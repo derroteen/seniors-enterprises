@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { SignupForm } from "@/components/auth/signup-form";
 import { Container } from "@/components/ui/container";
+import { StatusIcon } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
   title: "Create your account",
@@ -28,8 +29,11 @@ export default async function SignupPage({
             Save your details and keep track of your orders.
           </p>
           {params.message === "check-email" ? (
-            <div role="status" className="mt-5 rounded-lg bg-primary/10 p-4 text-sm">
-              <p className="font-semibold">Check your email to confirm your account.</p>
+            <div role="status" className="mt-5 rounded-lg border border-info-border bg-info-bg p-4 text-sm">
+              <p className="flex items-center gap-2 font-semibold text-info">
+                <StatusIcon tone="info" />
+                Check your email to confirm your account.
+              </p>
               <p className="mt-1 text-muted-foreground">
                 Follow the link in your inbox to finish signing up.
               </p>

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { signIn } from "@/app/(store)/auth/actions";
 import { Container } from "@/components/ui/container";
+import { StatusMessage } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -37,19 +38,19 @@ export default async function LoginPage({
             Sign in to view your account and orders.
           </p>
           {firstValue(params.error) === "invalid" ? (
-            <p role="alert" className="mt-5 rounded-lg bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+            <StatusMessage tone="danger" boxed className="mt-5">
               Incorrect email or password.
-            </p>
+            </StatusMessage>
           ) : null}
           {firstValue(params.message) === "password-updated" ? (
-            <p role="status" className="mt-5 rounded-lg bg-primary/10 p-3 text-sm">
+            <StatusMessage tone="info" boxed className="mt-5">
               Your password was updated. Sign in with your new password.
-            </p>
+            </StatusMessage>
           ) : null}
           {firstValue(params.error) === "callback" ? (
-            <p role="alert" className="mt-5 rounded-lg bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+            <StatusMessage tone="danger" boxed className="mt-5">
               This sign-in link could not be completed. Please try again.
-            </p>
+            </StatusMessage>
           ) : null}
           <form action={signIn} className="mt-6 grid gap-4">
             <input type="hidden" name="next" value={next} />

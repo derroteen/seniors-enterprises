@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Input } from "@/components/ui/input";
 import { Section } from "@/components/ui/section";
+import { StatusBadge, StatusMessage } from "@/components/ui/status-message";
 import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
@@ -20,9 +21,22 @@ const colorTokens = [
   { name: "Text", className: "bg-foreground", value: "var(--foreground)" },
   { name: "Primary blue", className: "bg-primary", value: "var(--primary)" },
   { name: "Primary dark", className: "bg-primary-dark", value: "var(--primary-dark)" },
+  { name: "Primary dark text", className: "bg-primary-dark-foreground", value: "var(--primary-dark-foreground)" },
   { name: "Gold accent", className: "bg-accent", value: "var(--accent)" },
   { name: "Muted text", className: "bg-muted", value: "var(--muted)" },
+  { name: "Muted background", className: "bg-muted-bg", value: "var(--muted-bg)" },
+  { name: "Muted border", className: "bg-muted-border", value: "var(--muted-border)" },
   { name: "Border", className: "bg-border", value: "var(--border)" },
+  { name: "Strong border", className: "bg-border-strong", value: "var(--border-strong)" },
+  { name: "Success", className: "bg-success", value: "var(--success)" },
+  { name: "Success background", className: "bg-success-bg", value: "var(--success-bg)" },
+  { name: "Warning", className: "bg-warning", value: "var(--warning)" },
+  { name: "Warning background", className: "bg-warning-bg", value: "var(--warning-bg)" },
+  { name: "Danger", className: "bg-danger", value: "var(--danger)" },
+  { name: "Danger background", className: "bg-danger-bg", value: "var(--danger-bg)" },
+  { name: "Info", className: "bg-info", value: "var(--info)" },
+  { name: "Info background", className: "bg-info-bg", value: "var(--info-bg)" },
+  { name: "Gold text", className: "bg-gold-text", value: "var(--gold-text)" },
 ];
 
 export default function StyleguidePage() {
@@ -102,6 +116,13 @@ export default function StyleguidePage() {
                 <Badge variant="primary">Primary</Badge>
                 <Badge variant="gold">Gold</Badge>
                 <Badge variant="outline">Outline</Badge>
+              </div>
+              <div className="mt-6 grid gap-2">
+                <StatusMessage tone="success" boxed>Success message</StatusMessage>
+                <StatusMessage tone="warning" boxed>Warning message</StatusMessage>
+                <StatusMessage tone="danger" boxed>Error message</StatusMessage>
+                <StatusMessage tone="info" boxed>Information message</StatusMessage>
+                <StatusBadge status="pending" />
               </div>
             </div>
           </div>

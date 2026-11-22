@@ -22,6 +22,7 @@ import { formatKes } from "@/lib/store-format";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
+import { StatusIcon, StatusMessage } from "@/components/ui/status-message";
 
 type FieldErrors = Partial<Record<keyof CheckoutFormValues, string>>;
 
@@ -182,7 +183,8 @@ export function CheckoutForm({
         <Container>
           <div className="mx-auto max-w-xl rounded-2xl border border-border bg-surface p-8 text-center">
             <h1 className="font-display text-3xl font-semibold">Your cart is empty</h1>
-            <p className="mt-3 text-muted-foreground">
+            <p className="mt-3 flex items-start justify-center gap-2 text-muted-foreground">
+              <StatusIcon tone="muted" />
               Add a product before continuing to checkout.
             </p>
             <Link
@@ -241,9 +243,9 @@ export function CheckoutForm({
                     className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
                   />
                   {errors.fullName ? (
-                    <p id="checkout-full-name-error" className="text-sm text-red-700 dark:text-red-300">
+                    <StatusMessage id="checkout-full-name-error" tone="danger">
                       {errors.fullName}
-                    </p>
+                    </StatusMessage>
                   ) : null}
                 </div>
 
@@ -263,9 +265,9 @@ export function CheckoutForm({
                     className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
                   />
                   {errors.email ? (
-                    <p id="checkout-email-error" className="text-sm text-red-700 dark:text-red-300">
+                    <StatusMessage id="checkout-email-error" tone="danger">
                       {errors.email}
-                    </p>
+                    </StatusMessage>
                   ) : null}
                 </div>
 
@@ -289,9 +291,9 @@ export function CheckoutForm({
                     Use 07…, 01…, or +254…
                   </p>
                   {errors.phone ? (
-                    <p id="checkout-phone-error" className="text-sm text-red-700 dark:text-red-300">
+                    <StatusMessage id="checkout-phone-error" tone="danger">
                       {errors.phone}
-                    </p>
+                    </StatusMessage>
                   ) : null}
                 </div>
               </div>
@@ -320,9 +322,9 @@ export function CheckoutForm({
                     ))}
                   </select>
                   {errors.county ? (
-                    <p id="checkout-county-error" className="text-sm text-red-700 dark:text-red-300">
+                    <StatusMessage id="checkout-county-error" tone="danger">
                       {errors.county}
-                    </p>
+                    </StatusMessage>
                   ) : null}
                 </div>
 
@@ -341,9 +343,9 @@ export function CheckoutForm({
                     className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
                   />
                   {errors.town ? (
-                    <p id="checkout-town-error" className="text-sm text-red-700 dark:text-red-300">
+                    <StatusMessage id="checkout-town-error" tone="danger">
                       {errors.town}
-                    </p>
+                    </StatusMessage>
                   ) : null}
                 </div>
 
@@ -362,9 +364,9 @@ export function CheckoutForm({
                     className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
                   />
                   {errors.street ? (
-                    <p id="checkout-street-error" className="text-sm text-red-700 dark:text-red-300">
+                    <StatusMessage id="checkout-street-error" tone="danger">
                       {errors.street}
-                    </p>
+                    </StatusMessage>
                   ) : null}
                 </div>
 
@@ -382,9 +384,9 @@ export function CheckoutForm({
                     className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
                   />
                   {errors.landmark ? (
-                    <p id="checkout-landmark-error" className="text-sm text-red-700 dark:text-red-300">
+                    <StatusMessage id="checkout-landmark-error" tone="danger">
                       {errors.landmark}
-                    </p>
+                    </StatusMessage>
                   ) : null}
                 </div>
               </div>
@@ -424,9 +426,9 @@ export function CheckoutForm({
             ) : null}
 
             {formError ? (
-              <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+              <StatusMessage tone="danger" boxed>
                 {formError}
-              </p>
+              </StatusMessage>
             ) : null}
 
             <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">

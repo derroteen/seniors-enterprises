@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { z } from "zod";
 
+import { StatusBadge, StatusMessage } from "@/components/ui/status-message";
 import { mockRepository } from "@/lib/data/mock/repository";
 import type { OrderLookupResult } from "@/lib/data/types";
 import { formatKes } from "@/lib/store-format";
@@ -142,14 +143,16 @@ export function OrderLookup({ initialOrderNumber = "" }: OrderLookupProps) {
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-auto inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          className="mt-auto inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100"
         >
           {isLoading ? "Looking up…" : "Look up order"}
         </button>
       </form>
 
       {message ? (
-        <p role="status" className="mt-4 text-sm text-muted-foreground">{message}</p>
+        <StatusMessage tone="danger" className="mt-4">
+          {message}
+        </StatusMessage>
       ) : null}
 
       {order ? (
@@ -161,7 +164,7 @@ export function OrderLookup({ initialOrderNumber = "" }: OrderLookupProps) {
             Order {orderNumber.trim().toUpperCase()}
           </h2>
           <p className="mt-2 text-sm">
-            Status: <span className="font-medium capitalize">{order.status}</span>
+            Status: <StatusBadge status={order.status} />
           </p>
           <p className="mt-1 text-sm">
             Total: <span className="font-medium">{formatKes(order.total_kes)}</span>

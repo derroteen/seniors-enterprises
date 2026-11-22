@@ -56,7 +56,7 @@ export default async function HomePage() {
               </p>
             </div>
 
-            <div className="relative mx-auto aspect-[1.08/1] w-full max-w-xl overflow-hidden rounded-[2rem] bg-primary-dark p-7 text-[#FBF8F1] sm:p-10">
+            <div className="relative mx-auto aspect-[1.08/1] w-full max-w-xl overflow-hidden rounded-[2rem] bg-primary-dark p-7 text-primary-dark-foreground sm:p-10">
               <div
                 aria-hidden="true"
                 className="absolute -right-20 -top-20 size-72 rounded-full border border-accent/50 sm:size-96"

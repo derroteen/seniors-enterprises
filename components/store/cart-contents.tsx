@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { StatusMessage } from "@/components/ui/status-message";
 import { useCartStore, getCartSubtotal } from "@/lib/cart-store";
 import { formatKes } from "@/lib/store-format";
 
@@ -95,7 +96,7 @@ export function CartContents({
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <div
-                  className="inline-flex min-h-9 items-center rounded-lg border border-border"
+                  className="inline-flex min-h-9 items-center rounded-lg border border-strong"
                   role="group"
                   aria-label={`Quantity for ${item.productName}`}
                 >
@@ -131,7 +132,7 @@ export function CartContents({
                     }}
                     aria-label={`Increase ${item.productName} quantity`}
                     disabled={item.quantity >= item.maxStock}
-                    className="grid size-9 place-items-center rounded-r-lg hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
+                    className="grid size-9 place-items-center rounded-r-lg hover:bg-background disabled:cursor-not-allowed disabled:text-muted-foreground disabled:opacity-80"
                   >
                     <span aria-hidden="true">+</span>
                   </button>
@@ -148,18 +149,22 @@ export function CartContents({
                 </button>
               </div>
               {item.quantity >= item.maxStock ? (
-                <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+                <StatusMessage tone="warning" className="mt-1 text-xs">
                   Maximum available quantity reached.
-                </p>
+                </StatusMessage>
               ) : null}
             </div>
           </li>
         ))}
       </ul>
 
-      <p role="status" aria-live="polite" className="mt-3 min-h-5 text-sm text-amber-800 dark:text-amber-200">
-        {stockWarning}
-      </p>
+      {stockWarning ? (
+        <StatusMessage role="status" aria-live="polite" tone="warning" className="mt-3 min-h-5">
+          {stockWarning}
+        </StatusMessage>
+      ) : (
+        <p aria-live="polite" className="mt-3 min-h-5" />
+      )}
 
       {showSummary ? (
         <div className="mt-4 border-t border-border pt-4">

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { requestPasswordReset } from "@/app/(store)/auth/actions";
 import { Container } from "@/components/ui/container";
+import { StatusMessage } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
   title: "Forgot password",
@@ -28,19 +29,19 @@ export default async function ForgotPasswordPage({
             Enter your email and we will send a password reset link if an account matches.
           </p>
           {params.message === "sent" ? (
-            <p role="status" className="mt-5 rounded-lg bg-primary/10 p-3 text-sm">
+            <StatusMessage tone="info" boxed className="mt-5">
               If an account exists for this email, we sent a password reset link.
-            </p>
+            </StatusMessage>
           ) : null}
           {params.error === "invalid" ? (
-            <p role="alert" className="mt-5 rounded-lg bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+            <StatusMessage tone="danger" boxed className="mt-5">
               Enter a valid email address.
-            </p>
+            </StatusMessage>
           ) : null}
           {params.error === "send" ? (
-            <p role="alert" className="mt-5 rounded-lg bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+            <StatusMessage tone="danger" boxed className="mt-5">
               We could not send the reset email. Please try again.
-            </p>
+            </StatusMessage>
           ) : null}
           <form action={requestPasswordReset} className="mt-6 grid gap-4">
             <label className="grid gap-1.5 text-sm font-medium">

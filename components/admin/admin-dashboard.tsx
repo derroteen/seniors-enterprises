@@ -14,6 +14,7 @@ import {
 } from "@/app/admin/actions";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
+import { StatusBadge, StatusMessage } from "@/components/ui/status-message";
 import type { Category, Order, OrderStatus, Product, ProductVariant } from "@/lib/data/types";
 import { formatKes } from "@/lib/store-format";
 
@@ -402,14 +403,14 @@ export function AdminDashboard({
         </nav>
 
         {formMessage ? (
-          <p role="status" className="mt-4 text-sm text-emerald-800 dark:text-emerald-300">
+          <StatusMessage tone="success" className="mt-4">
             {formMessage}
-          </p>
+          </StatusMessage>
         ) : null}
         {formError ? (
-          <p role="alert" className="mt-4 text-sm text-red-800 dark:text-red-200">
+          <StatusMessage tone="danger" className="mt-4">
             {formError}
-          </p>
+          </StatusMessage>
         ) : null}
 
         {activeSection === "dashboard" ? (
@@ -724,9 +725,9 @@ export function AdminDashboard({
             <div>
               <h2 className="text-lg font-semibold">Orders ({orders.length})</h2>
               {orderError ? (
-                <p role="alert" className="mt-2 text-sm text-red-800 dark:text-red-200">
+                <StatusMessage tone="danger" className="mt-2">
                   {orderError}
-                </p>
+                </StatusMessage>
               ) : null}
             </div>
             {orders.length ? orders.map((order) => (
@@ -736,7 +737,10 @@ export function AdminDashboard({
               >
                 <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
                   <div>
-                    <h3 className="font-semibold">{order.order_number} · {order.customer_name}</h3>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold">{order.order_number} · {order.customer_name}</h3>
+                      <StatusBadge status={order.status} />
+                    </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                       {formatKes(order.total_kes)} · {new Date(order.created_at).toLocaleString()}
                     </p>
@@ -860,8 +864,8 @@ function ProductImageUpload({ productId }: { productId: string }) {
       <button type="submit" disabled={isPending} className={secondaryButtonClass}>
         {isPending ? "Uploading..." : "Upload image"}
       </button>
-      {message ? <p role="status" className="text-sm text-emerald-800 dark:text-emerald-300">{message}</p> : null}
-      {error ? <p role="alert" className="text-sm text-red-800 dark:text-red-200">{error}</p> : null}
+      {message ? <StatusMessage tone="success">{message}</StatusMessage> : null}
+      {error ? <StatusMessage tone="danger">{error}</StatusMessage> : null}
     </form>
   );
 }
@@ -895,8 +899,8 @@ function AdminField({
 const inputClassName =
   "min-h-11 w-full rounded-lg border border-border bg-background px-3 text-foreground";
 const primaryButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";
 const secondaryButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold hover:bg-background disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold hover:bg-background disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";
 const dangerButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-lg border border-red-500/50 px-4 text-sm font-semibold text-red-800 hover:bg-red-500/10 dark:text-red-200 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-11 items-center justify-center rounded-lg border border-danger-border px-4 text-sm font-semibold text-danger hover:bg-danger-bg disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
+import { StatusMessage } from "@/components/ui/status-message";
 
 interface CheckoutResultProps {
   orderNumber: string;
@@ -27,18 +28,21 @@ export function CheckoutResult({ orderNumber, outcome }: CheckoutResultProps) {
       <Container>
         <div className="mx-auto max-w-2xl">
           {isDemoMode ? (
-            <div className="rounded-xl border border-accent bg-accent/15 px-4 py-3 text-sm font-semibold">
+            <StatusMessage tone="warning" boxed className="rounded-xl px-4 py-3 font-semibold">
               DEMO MODE: no real payment taken
-            </div>
+            </StatusMessage>
           ) : null}
           <div className="mt-6 rounded-2xl border border-border bg-surface p-6 sm:p-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
+            <StatusMessage
+              tone={isDemoMode ? (succeeded ? "success" : "danger") : "warning"}
+              className="font-semibold uppercase tracking-[0.15em]"
+            >
               {isDemoMode
                 ? succeeded
                   ? "Demo order complete"
                   : "Demo payment not completed"
                 : "Order received"}
-            </p>
+            </StatusMessage>
             <h1 className="mt-2 font-display text-3xl font-semibold">
               {isDemoMode
                 ? succeeded

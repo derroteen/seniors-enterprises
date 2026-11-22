@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { updatePassword } from "@/app/(store)/auth/actions";
 import { Container } from "@/components/ui/container";
 import { redirect } from "next/navigation";
+import { StatusMessage } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
   title: "Reset password",
@@ -29,19 +30,19 @@ export default async function ResetPasswordPage({
           </p>
           <h1 className="mt-2 font-display text-3xl font-semibold">Choose a new password</h1>
           {params.error === "expired" ? (
-            <p role="alert" className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+            <StatusMessage tone="danger" boxed className="mt-4">
               This reset link has expired. Request a new one and try again.
-            </p>
+            </StatusMessage>
           ) : null}
           {params.error === "update" ? (
-            <p role="alert" className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+            <StatusMessage tone="danger" boxed className="mt-4">
               We could not update your password. Request a new reset link and try again.
-            </p>
+            </StatusMessage>
           ) : null}
           {params.error === "invalid" ? (
-            <p role="alert" className="mt-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+            <StatusMessage tone="danger" boxed className="mt-4">
               Use a password with at least 8 characters and make sure both entries match.
-            </p>
+            </StatusMessage>
           ) : null}
           <form action={updatePassword} className="mt-6 grid gap-4">
             <label className="grid gap-1.5 text-sm font-medium">

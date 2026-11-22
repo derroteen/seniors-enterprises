@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { signUp } from "@/app/(store)/auth/actions";
+import { StatusMessage } from "@/components/ui/status-message";
 
 export function SignupForm({ hasError }: { hasError: boolean }) {
   const [showPasswords, setShowPasswords] = useState(false);
@@ -11,9 +12,9 @@ export function SignupForm({ hasError }: { hasError: boolean }) {
   return (
     <form action={signUp} className="mt-6 grid gap-4">
       {hasError ? (
-        <p role="alert" className="rounded-lg bg-red-500/10 p-3 text-sm text-red-800 dark:text-red-200">
+        <StatusMessage tone="danger" boxed>
           We could not create your account. Check your details and try again.
-        </p>
+        </StatusMessage>
       ) : null}
       <label className="grid gap-1.5 text-sm font-medium">
         Full name
