@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef, useState, type TouchEvent } from "react";
 
 import { ChevronLeftIcon, ChevronRightIcon, ZoomIcon } from "@/components/store/icons";
+import { NeutralTile } from "@/components/store/neutral-tile";
 import type { ProductImage } from "@/lib/data/types";
 
 interface ProductGalleryProps {
@@ -45,15 +46,9 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
   if (!activeImage) {
     return (
-      <div
-        role="img"
-        aria-label={`${productName} product image`}
-        className="grid aspect-[4/5] place-items-center rounded-2xl border border-border bg-surface text-center text-muted-foreground"
-      >
-        <span className="font-display text-6xl text-primary/40" aria-hidden="true">
-          {productName.charAt(0)}
-        </span>
-      </div>
+      <NeutralTile className="aspect-[4/5] rounded-2xl border border-border">
+        <span className="sr-only">{productName} product image</span>
+      </NeutralTile>
     );
   }
 

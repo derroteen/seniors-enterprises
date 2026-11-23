@@ -16,6 +16,12 @@ import type {
   UpdateOrderPaymentInput,
 } from "@/lib/data/types";
 import { getDeliveryFee } from "@/lib/config/delivery";
+import {
+  NEUTRAL_COLOR,
+  NEUTRAL_SIZE,
+  sortColorLabels,
+  sortSizeLabels,
+} from "@/lib/variant-options";
 import { getKenyanCountyByName } from "@/lib/config/kenya-locations";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
@@ -46,12 +52,6 @@ function throwOnQueryError(
 
 function escapeLikeValue(value: string) {
   return value.replace(/[\\%_]/g, "\\$&");
-}
-
-function sortSizes(sizes: string[]) {
-  return sizes.sort((first, second) =>
-    first.localeCompare(second, undefined, { numeric: true }),
-  );
 }
 
 async function getCategoryBySlug(slug: string) {
@@ -367,10 +367,12 @@ export const supabaseRepository: StoreRepository = {
     throwOnQueryError("Loading product filter options", error);
 
     return {
-      sizes: sortSizes([...new Set((data ?? []).map((variant) => variant.size))]),
-      colors: [...new Set((data ?? []).map((variant) => variant.color))].sort(
-        (first, second) => first.localeCompare(second),
-      ),
+      sizes: sortSizeLabels(
+        [...new Set((data ?? []).map((variant) => variant.size))],
+      ).filter((size) => size !== NEUTRAL_SIZE),
+      colors: sortColorLabels(
+        [...new Set((data ?? []).map((variant) => variant.color))],
+      ).filter((color) => color !== NEUTRAL_COLOR),
     };
   },
 

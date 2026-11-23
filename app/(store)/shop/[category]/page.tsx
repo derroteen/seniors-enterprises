@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Pagination } from "@/components/store/pagination";
@@ -78,6 +79,52 @@ export default async function CategoryPage({
   const pageSize = 12;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
+  // A category with no products at all gets a clean empty state — no filters
+  // or sort controls that cannot return anything.
+  let categoryIsEmpty = false;
+  if (products.length === 0) {
+    const unfiltered = await dataRepository.getProducts(
+      { categoryId: category.id, pageSize: 1 },
+      "newest",
+      1,
+    );
+    categoryIsEmpty = unfiltered.totalCount === 0;
+  }
+  const hasActiveFilters = Boolean(
+    query || size || color || minPriceValue || maxPriceValue || page > 1,
+  );
+
+  if (categoryIsEmpty) {
+    return (
+      <main>
+        <Section>
+          <Container>
+            <p className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
+              Collection
+            </p>
+            <h1 className="mt-2 font-display text-4xl font-semibold">
+              {category.name}
+            </h1>
+            <div className="mt-8 rounded-2xl border border-dashed border-border bg-surface px-6 py-12 text-center">
+              <h2 className="font-display text-xl font-semibold">
+                No products in this category yet.
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Check back soon, or browse everything else in the shop.
+              </p>
+              <Link
+                href="/shop"
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Back to shop
+              </Link>
+            </div>
+          </Container>
+        </Section>
+      </main>
+    );
+  }
+
   return (
     <main>
       <Section>
@@ -111,7 +158,13 @@ export default async function CategoryPage({
           </div>
 
           <div className="mt-8">
-            <ProductGrid products={products} />
+            <ProductGrid
+              products={products}
+              emptyTitle="No products found"
+              emptyDescription="Try adjusting your filters, or view everything in this category."
+              emptyActionHref={hasActiveFilters ? `/shop/${category.slug}` : undefined}
+              emptyActionLabel="Clear filters"
+            />
             <Pagination
               currentPage={page}
               pageCount={pageCount}

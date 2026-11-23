@@ -9,6 +9,7 @@ import { StatusIcon, StatusMessage } from "@/components/ui/status-message";
 import type { Product, ProductVariant } from "@/lib/data/types";
 import { useCartStore } from "@/lib/cart-store";
 import { formatKes, getDiscountPercent } from "@/lib/store-format";
+import { sortSizeLabels } from "@/lib/variant-options";
 import { getWhatsAppUrl, isWhatsAppConfigured } from "@/lib/whatsapp";
 
 interface ProductPurchasePanelProps {
@@ -37,8 +38,14 @@ export function ProductPurchasePanel({
   const openCartDrawer = useCartStore((state) => state.openDrawer);
   const hasWhatsAppContact = isWhatsAppConfigured();
 
-  const sizes = [...new Set(variants.map((variant) => variant.size))];
-  const colors = variants.filter((variant) => variant.size === selectedSize);
+  const sizes = sortSizeLabels([...new Set(variants.map((variant) => variant.size))]);
+  const colors = variants
+    .filter((variant) => variant.size === selectedSize)
+    .sort((first, second) =>
+      first.color.localeCompare(second.color, undefined, {
+        sensitivity: "base",
+      }),
+    );
   const selectedVariant = variants.find(
     (variant) =>
       variant.size === selectedSize && variant.color === selectedColor,

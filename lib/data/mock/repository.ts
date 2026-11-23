@@ -14,6 +14,12 @@ import type {
 import type { StoreRepository } from "@/lib/data/repository";
 import { mockCategories, mockProducts } from "@/lib/data/mock/products";
 import { getDeliveryFee } from "@/lib/config/delivery";
+import {
+  NEUTRAL_COLOR,
+  NEUTRAL_SIZE,
+  sortColorLabels,
+  sortSizeLabels,
+} from "@/lib/variant-options";
 
 const DEMO_ORDERS_KEY = "seniors-demo-orders";
 let memoryOrders: Order[] = [];
@@ -224,10 +230,10 @@ export const mockRepository: StoreRepository = {
       }
     }
     return {
-      sizes: [...sizes].sort((first, second) =>
-        first.localeCompare(second, undefined, { numeric: true }),
+      sizes: sortSizeLabels([...sizes]).filter((size) => size !== NEUTRAL_SIZE),
+      colors: sortColorLabels([...colors]).filter(
+        (color) => color !== NEUTRAL_COLOR,
       ),
-      colors: [...colors].sort((first, second) => first.localeCompare(second)),
     };
   },
 

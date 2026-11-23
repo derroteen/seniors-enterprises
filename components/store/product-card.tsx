@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { NeutralTile } from "@/components/store/neutral-tile";
 import type { Product } from "@/lib/data/types";
 import { formatKes, getDiscountPercent } from "@/lib/store-format";
 
@@ -34,15 +35,9 @@ export function ProductCard({ product }: ProductCardProps) {
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div
-              role="img"
-              aria-label={`${product.name} product image`}
-              className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground"
-            >
-              <span className="font-display text-5xl text-primary/40" aria-hidden="true">
-                {product.name.charAt(0)}
-              </span>
-            </div>
+            <NeutralTile className="h-full">
+              <span className="sr-only">{product.name} product image</span>
+            </NeutralTile>
           )}
           {discount ? (
             <Badge variant="gold" className="absolute left-3 top-3 shadow-sm">

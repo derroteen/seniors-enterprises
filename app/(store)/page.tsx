@@ -14,10 +14,21 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [categories, featuredProducts] = await Promise.all([
+  const [categories, featuredProducts, catalogProducts] = await Promise.all([
     dataRepository.getCategories(),
     dataRepository.getFeaturedProducts(4),
+    dataRepository.getProducts({ pageSize: 48 }, "newest", 1),
   ]);
+
+  // Category tiles show the main photo of the category's first product, or a
+  // neutral tile when the category has no products.
+  const covers: Record<string, string> = {};
+  for (const product of catalogProducts.products) {
+    const imageUrl = product.images[0]?.url;
+    if (imageUrl && !covers[product.category_id]) {
+      covers[product.category_id] = imageUrl;
+    }
+  }
 
   return (
     <main>
@@ -74,7 +85,7 @@ export default async function HomePage() {
               View all
             </Link>
           </div>
-          <CategoryGrid categories={categories} />
+          <CategoryGrid categories={categories} covers={covers} />
         </Container>
       </Section>
 

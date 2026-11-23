@@ -103,7 +103,25 @@ export default async function ShopPage({
           </div>
 
           <div className="mt-8">
-            <ProductGrid products={products} />
+            <ProductGrid
+              products={products}
+              emptyTitle={
+                query || size || color || minPriceValue || maxPriceValue || categorySlug || page > 1
+                  ? "No products found"
+                  : "No products yet"
+              }
+              emptyDescription={
+                query || size || color || minPriceValue || maxPriceValue || categorySlug || page > 1
+                  ? "Try adjusting your filters, or view everything we have."
+                  : "Check back soon for new arrivals."
+              }
+              emptyActionHref={
+                query || size || color || minPriceValue || maxPriceValue || categorySlug || page > 1
+                  ? "/shop"
+                  : undefined
+              }
+              emptyActionLabel="View all products"
+            />
             <Pagination
               currentPage={safePage}
               pageCount={pageCount}
