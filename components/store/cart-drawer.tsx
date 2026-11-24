@@ -144,7 +144,14 @@ export function CartDrawer({ onClose, open }: CartDrawerProps) {
           <p className="mt-1 text-xs text-muted-foreground">
             Free delivery countrywide.
           </p>
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-border px-3 text-sm font-semibold hover:bg-surface"
+          >
+            Continue shopping
+          </button>
+          <div className="mt-3 grid grid-cols-2 gap-3">
             <Link
               href="/cart"
               onClick={onClose}
