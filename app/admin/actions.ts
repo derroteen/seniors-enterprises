@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireAdminAction, requireAdminPage } from "@/lib/admin/auth";
+import { generateSku, makeSkuUnique, stockRowKey } from "@/lib/admin/variants";
+import type { Product, ProductImage, ProductVariant } from "@/lib/data/types";
 import { createClient } from "@/lib/supabase/server";
 
 const slugSchema = z
@@ -109,6 +111,52 @@ function revalidateStorefront() {
   revalidatePath("/admin");
 }
 
+function mapProductImage(row: {
+  id: string;
+  product_id: string;
+  url: string;
+  alt_text: string | null;
+  sort_order: number;
+}): ProductImage {
+  return {
+    id: row.id,
+    product_id: row.product_id,
+    url: row.url,
+    alt_text: row.alt_text,
+    sort_order: row.sort_order,
+  };
+}
+
+async function loadSavedProduct(
+  client: Awaited<ReturnType<typeof requireAdminAction>>["client"],
+  productId: string,
+): Promise<Product> {
+  const [productResult, variantsResult, imagesResult] = await Promise.all([
+    client.from("products").select("*").eq("id", productId).single(),
+    client.from("product_variants").select("*").eq("product_id", productId),
+    client
+      .from("product_images")
+      .select("*")
+      .eq("product_id", productId)
+      .order("sort_order", { ascending: true }),
+  ]);
+  if (productResult.error) {
+    throw new Error(`Could not reload the saved product: ${productResult.error.message}`);
+  }
+  if (variantsResult.error) {
+    throw new Error(`Could not reload product options: ${variantsResult.error.message}`);
+  }
+  if (imagesResult.error) {
+    throw new Error(`Could not reload product photos: ${imagesResult.error.message}`);
+  }
+
+  const variants: ProductVariant[] = (variantsResult.data ?? []).map(
+    (variant) => ({ ...variant }),
+  );
+  const images: ProductImage[] = (imagesResult.data ?? []).map(mapProductImage);
+  return { ...productResult.data, variants, images };
+}
+
 function getVariantFileType(type: string, bytes: Uint8Array) {
   const imageType = allowedImageTypes.get(type);
   if (!imageType) {
@@ -136,7 +184,10 @@ export async function logoutAdmin() {
   redirect("/login");
 }
 
-export async function saveProduct(input: unknown) {
+export async function saveProduct(input: unknown): Promise<{
+  product: Product;
+  warnings: string[];
+}> {
   const { client } = await requireAdminAction();
   const parsed = productSchema.safeParse(input);
   if (!parsed.success) {
@@ -180,6 +231,7 @@ export async function saveProduct(input: unknown) {
   }
   const savedProduct = savedProductResult.data;
 
+  const warnings: string[] = [];
   try {
     const { data: existingVariants, error: existingVariantsError } = await client
       .from("product_variants")
@@ -189,28 +241,100 @@ export async function saveProduct(input: unknown) {
       throw new Error(`Could not load existing variants: ${existingVariantsError.message}`);
     }
 
+    // SKUs must be unique across the whole shop, not just this product.
+    const { data: allVariantRows, error: allVariantsError } = await client
+      .from("product_variants")
+      .select("id, product_id, size, color, sku");
+    if (allVariantsError) {
+      throw new Error(`Could not check existing SKUs: ${allVariantsError.message}`);
+    }
+
     const existingByCombination = new Map(
       (existingVariants ?? []).map((variant) => [
-        `${variant.size.toLocaleLowerCase()}|${variant.color.toLocaleLowerCase()}`,
+        stockRowKey(variant.size, variant.color),
         variant,
       ]),
     );
     const desiredCombinations = new Set<string>();
+    for (const variant of product.variants) {
+      desiredCombinations.add(stockRowKey(variant.size, variant.color));
+    }
+
+    const removedVariantIds = (existingVariants ?? [])
+      .filter((variant) => !desiredCombinations.has(stockRowKey(variant.size, variant.color)))
+      .map((variant) => variant.id);
+
+    // Variants referenced by past orders cannot be deleted; keep them with
+    // stock set to 0 so they show as sold out instead of disappearing.
+    const protectedVariantIds = new Set<string>();
+    if (removedVariantIds.length > 0) {
+      const { data: orderItemRows, error: orderItemsError } = await client
+        .from("order_items")
+        .select("variant_id")
+        .in("variant_id", removedVariantIds);
+      if (orderItemsError) {
+        throw new Error(`Could not check order history: ${orderItemsError.message}`);
+      }
+      for (const row of orderItemRows ?? []) {
+        if (row.variant_id) {
+          protectedVariantIds.add(row.variant_id);
+        }
+      }
+    }
+    const deletableVariantIds = removedVariantIds.filter(
+      (id) => !protectedVariantIds.has(id),
+    );
+    if (protectedVariantIds.size > 0) {
+      const { error: protectError } = await client
+        .from("product_variants")
+        .update({ stock_quantity: 0 })
+        .in("id", [...protectedVariantIds]);
+      if (protectError) {
+        throw new Error(`Could not update sold-out options: ${protectError.message}`);
+      }
+      warnings.push(
+        "Some options have past orders, so they were kept with stock set to 0 instead of being deleted.",
+      );
+    }
+
+    // SKUs taken by rows that will still exist after this save.
+    const blockedSkus = new Set(
+      (allVariantRows ?? [])
+        .filter((row) => {
+          if (deletableVariantIds.includes(row.id)) {
+            return false;
+          }
+          if (
+            row.product_id === savedProduct.id &&
+            desiredCombinations.has(stockRowKey(row.size, row.color))
+          ) {
+            return false;
+          }
+          return true;
+        })
+        .map((row) => row.sku.trim().toLocaleLowerCase())
+        .filter(Boolean),
+    );
+    const usedSkus = new Set<string>();
 
     for (const variant of product.variants) {
-      const combination = `${variant.size.toLocaleLowerCase()}|${variant.color.toLocaleLowerCase()}`;
-      desiredCombinations.add(combination);
+      const combination = stockRowKey(variant.size, variant.color);
       const existing = existingByCombination.get(combination);
+      const baseSku =
+        variant.sku?.trim() ||
+        existing?.sku ||
+        generateSku(product.name, variant.color, variant.size);
+      const sku = makeSkuUnique(
+        baseSku,
+        (candidate) =>
+          blockedSkus.has(candidate) || usedSkus.has(candidate),
+      );
+      usedSkus.add(sku.toLocaleLowerCase());
       const variantValues = {
         product_id: savedProduct.id,
         size: variant.size,
         color: variant.color,
-        sku:
-          variant.sku ||
-          existing?.sku ||
-          `${product.slug}-${variant.size}-${variant.color}-${randomUUID().slice(0, 8)}`
-            .replace(/[^a-zA-Z0-9-]/g, "-")
-            .toUpperCase(),
+        sku,
         stock_quantity: variant.stock_quantity,
         price_override_kes:
           variant.price_override_kes === undefined
@@ -225,30 +349,27 @@ export async function saveProduct(input: unknown) {
             .eq("id", existing.id)
         : await client.from("product_variants").insert(variantValues);
       if (result.error) {
-        throw new Error(`Could not save variant ${variant.size}/${variant.color}: ${result.error.message}`);
+        throw new Error(`Could not save option ${variant.size}/${variant.color}: ${result.error.message}`);
       }
     }
 
-    const removedVariantIds = (existingVariants ?? [])
-      .filter(
-        (variant) =>
-          !desiredCombinations.has(
-            `${variant.size.toLocaleLowerCase()}|${variant.color.toLocaleLowerCase()}`,
-          ),
-      )
-      .map((variant) => variant.id);
-    if (removedVariantIds.length > 0) {
+    if (deletableVariantIds.length > 0) {
       const { error } = await client
         .from("product_variants")
         .delete()
-        .in("id", removedVariantIds);
+        .in("id", deletableVariantIds);
       if (error) {
-        throw new Error(`Could not remove variants: ${error.message}`);
+        throw new Error(
+          `Could not remove options: ${error.message}. This option has past orders, so it cannot be deleted. Set its stock to 0 instead.`,
+        );
       }
     }
   } finally {
     revalidateStorefront();
   }
+
+  const savedWithRelations = await loadSavedProduct(client, savedProduct.id);
+  return { product: savedWithRelations, warnings };
 }
 
 export async function deleteProduct(productId: string) {
@@ -355,12 +476,16 @@ export async function uploadProductImage(formData: FormData) {
   }
 
   const { data: publicUrl } = storage.getPublicUrl(objectPath);
-  const { error: insertError } = await client.from("product_images").insert({
-    product_id: productId,
-    url: publicUrl.publicUrl,
-    alt_text: altText || file.name.replace(/\.[^.]+$/, ""),
-    sort_order: (lastImage?.sort_order ?? -1) + 1,
-  });
+  const { data: insertedImage, error: insertError } = await client
+    .from("product_images")
+    .insert({
+      product_id: productId,
+      url: publicUrl.publicUrl,
+      alt_text: altText || file.name.replace(/\.[^.]+$/, ""),
+      sort_order: (lastImage?.sort_order ?? -1) + 1,
+    })
+    .select("*")
+    .single();
   if (insertError) {
     const { error: cleanupError } = await storage.remove([objectPath]);
     if (cleanupError) {
@@ -370,8 +495,96 @@ export async function uploadProductImage(formData: FormData) {
     }
     throw new Error(`Could not save image metadata: ${insertError.message}`);
   }
+  if (!insertedImage) {
+    throw new Error("Could not save image metadata.");
+  }
 
   revalidateStorefront();
+  return mapProductImage(insertedImage);
+}
+
+async function listProductImages(
+  client: Awaited<ReturnType<typeof requireAdminAction>>["client"],
+  productId: string,
+) {
+  const { data, error } = await client
+    .from("product_images")
+    .select("*")
+    .eq("product_id", productId)
+    .order("sort_order", { ascending: true });
+  if (error) {
+    throw new Error(`Could not load product photos: ${error.message}`);
+  }
+  return (data ?? []).map(mapProductImage);
+}
+
+export async function deleteProductImage(imageId: string) {
+  const { client } = await requireAdminAction();
+  const id = z.string().uuid().parse(imageId);
+
+  const { data: image, error: lookupError } = await client
+    .from("product_images")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (lookupError) {
+    throw new Error(`Could not find the photo: ${lookupError.message}`);
+  }
+  if (!image) {
+    throw new Error("The photo no longer exists.");
+  }
+
+  const marker = "/product-images/";
+  const markerIndex = image.url.indexOf(marker);
+  if (markerIndex !== -1) {
+    const objectPath = image.url.slice(markerIndex + marker.length);
+    const { error: storageError } = await client.storage
+      .from("product-images")
+      .remove([objectPath]);
+    if (storageError) {
+      throw new Error(`Could not remove the stored file: ${storageError.message}`);
+    }
+  }
+
+  const { error } = await client.from("product_images").delete().eq("id", id);
+  if (error) {
+    throw new Error(`Could not delete the photo: ${error.message}`);
+  }
+
+  revalidateStorefront();
+  return listProductImages(client, image.product_id);
+}
+
+export async function reorderProductImages(
+  productId: string,
+  orderedImageIds: string[],
+) {
+  const { client } = await requireAdminAction();
+  const id = z.string().uuid().parse(productId);
+  const ids = z.array(z.string().uuid()).min(1).parse(orderedImageIds);
+
+  const images = await listProductImages(client, id);
+  const imageIds = new Set(images.map((image) => image.id));
+  if (
+    ids.length !== images.length ||
+    new Set(ids).size !== ids.length ||
+    ids.some((imageId) => !imageIds.has(imageId))
+  ) {
+    throw new Error("The photo order is out of date. Refresh and try again.");
+  }
+
+  for (const [index, imageId] of ids.entries()) {
+    const { error } = await client
+      .from("product_images")
+      .update({ sort_order: index })
+      .eq("id", imageId);
+    if (error) {
+      throw new Error(`Could not reorder photos: ${error.message}`);
+    }
+  }
+
+  revalidateStorefront();
+  return listProductImages(client, id);
 }
 
 export async function updateOrderStatus(orderNumber: string, status: string) {

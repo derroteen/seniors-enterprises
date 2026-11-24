@@ -9,7 +9,12 @@ import { StatusIcon, StatusMessage } from "@/components/ui/status-message";
 import type { Product, ProductVariant } from "@/lib/data/types";
 import { useCartStore } from "@/lib/cart-store";
 import { formatKes, getDiscountPercent } from "@/lib/store-format";
-import { sortSizeLabels } from "@/lib/variant-options";
+import {
+  isNeutralColorOption,
+  isNeutralSizeOption,
+  sortColorLabels,
+  sortSizeLabels,
+} from "@/lib/variant-options";
 import { getWhatsAppUrl, isWhatsAppConfigured } from "@/lib/whatsapp";
 
 interface ProductPurchasePanelProps {
@@ -21,9 +26,21 @@ export function ProductPurchasePanel({
   product,
   variants,
 }: ProductPurchasePanelProps) {
+  const sizes = sortSizeLabels([
+    ...new Set(variants.map((variant) => variant.size)),
+  ]);
+  const allColors = sortColorLabels([
+    ...new Set(variants.map((variant) => variant.color)),
+  ]);
+  const showSizePicker = !isNeutralSizeOption(sizes);
+  const showColorPicker = !isNeutralColorOption(allColors);
   const firstVariant = variants.find((variant) => variant.stock_quantity > 0) ?? variants[0];
-  const [selectedSize, setSelectedSize] = useState(firstVariant?.size ?? "");
-  const [selectedColor, setSelectedColor] = useState(firstVariant?.color ?? "");
+  const [selectedSize, setSelectedSize] = useState(
+    firstVariant?.size ?? sizes[0] ?? "",
+  );
+  const [selectedColor, setSelectedColor] = useState(
+    firstVariant?.color ?? allColors[0] ?? "",
+  );
   const [cartMessage, setCartMessage] = useState("");
   const [announcement, setAnnouncement] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -38,13 +55,10 @@ export function ProductPurchasePanel({
   const openCartDrawer = useCartStore((state) => state.openDrawer);
   const hasWhatsAppContact = isWhatsAppConfigured();
 
-  const sizes = sortSizeLabels([...new Set(variants.map((variant) => variant.size))]);
   const colors = variants
     .filter((variant) => variant.size === selectedSize)
     .sort((first, second) =>
-      first.color.localeCompare(second.color, undefined, {
-        sensitivity: "base",
-      }),
+      first.color.localeCompare(second.color, undefined, { sensitivity: "base" }),
     );
   const selectedVariant = variants.find(
     (variant) =>
@@ -212,6 +226,7 @@ export function ProductPurchasePanel({
 
       {variants.length > 0 ? (
         <div className="mt-6 grid gap-5">
+          {showSizePicker ? (
           <fieldset>
             <legend className="text-sm font-semibold">
               Size <span className="font-normal text-muted-foreground">{selectedSize}</span>
@@ -264,7 +279,9 @@ export function ProductPurchasePanel({
               })}
             </div>
           </fieldset>
+          ) : null}
 
+          {showColorPicker ? (
           <fieldset>
             <legend className="text-sm font-semibold">
               Color <span className="font-normal text-muted-foreground">{selectedColor}</span>
@@ -314,6 +331,7 @@ export function ProductPurchasePanel({
               ))}
             </div>
           </fieldset>
+          ) : null}
 
           <StatusMessage tone={isInStock ? "success" : "danger"} className="font-medium">
             {!selectedVariant

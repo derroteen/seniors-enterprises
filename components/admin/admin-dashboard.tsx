@@ -8,14 +8,15 @@ import {
   deleteProduct as deleteProductAction,
   logoutAdmin,
   saveCategory as saveCategoryAction,
-  saveProduct as saveProductAction,
   updateOrderStatus as updateOrderStatusAction,
-  uploadProductImage,
 } from "@/app/admin/actions";
+import { LowStockPanel } from "@/components/admin/low-stock-panel";
+import { ProductForm } from "@/components/admin/product-form";
+import { ProductsPanel } from "@/components/admin/products-panel";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { StatusBadge, StatusMessage } from "@/components/ui/status-message";
-import type { Category, Order, OrderStatus, Product, ProductVariant } from "@/lib/data/types";
+import type { Category, Order, OrderStatus, Product } from "@/lib/data/types";
 import { formatKes } from "@/lib/store-format";
 
 interface AdminCatalog {
@@ -45,38 +46,6 @@ type AdminOrder = Pick<
   | "items"
 >;
 
-interface ProductFormValues {
-  name: string;
-  slug: string;
-  categoryId: string;
-  price: string;
-  compareAtPrice: string;
-  description: string;
-  variants: string;
-  isActive: boolean;
-  isFeatured: boolean;
-}
-
-interface VariantInput {
-  size: string;
-  color: string;
-  stock_quantity: number;
-  sku?: string;
-  price_override_kes?: number | null;
-}
-
-const emptyProductForm: ProductFormValues = {
-  name: "",
-  slug: "",
-  categoryId: "",
-  price: "",
-  compareAtPrice: "",
-  description: "",
-  variants: "S,Black,5,,",
-  isActive: true,
-  isFeatured: false,
-};
-
 const orderStatuses: OrderStatus[] = [
   "pending",
   "paid",
@@ -104,58 +73,6 @@ function toSlug(value: string) {
     .replace(/^-|-$/g, "");
 }
 
-function variantsToText(variants: ProductVariant[]) {
-  return variants
-    .map(
-      (variant) =>
-        `${variant.size},${variant.color},${variant.stock_quantity},${variant.sku},${variant.price_override_kes ?? ""}`,
-    )
-    .join("\n");
-}
-
-function makeVariants(value: string): VariantInput[] {
-  const lines = value.split("\n").map((line) => line.trim()).filter(Boolean);
-  if (lines.length === 0) {
-    throw new Error("Add at least one size, color, stock, SKU, and optional price row.");
-  }
-
-  const combinations = new Set<string>();
-  return lines.map((line, index) => {
-    const [size, color, quantityText, skuText, overrideText, extra] = line
-      .split(",")
-      .map((part) => part.trim());
-    const quantity = Number(quantityText);
-    const priceOverride = overrideText ? Number(overrideText) : null;
-    const combination = `${size?.toLocaleLowerCase()}|${color?.toLocaleLowerCase()}`;
-
-    if (
-      !size ||
-      !color ||
-      extra !== undefined ||
-      !Number.isSafeInteger(quantity) ||
-      quantity < 0 ||
-      (priceOverride !== null &&
-        (!Number.isSafeInteger(priceOverride) || priceOverride < 1))
-    ) {
-      throw new Error(
-        `Variant row ${index + 1} must be "size,color,stock,sku,price-override" with valid whole-shilling values.`,
-      );
-    }
-    if (combinations.has(combination)) {
-      throw new Error(`Variant row ${index + 1} repeats a size and color combination.`);
-    }
-    combinations.add(combination);
-
-    return {
-      size,
-      color,
-      stock_quantity: quantity,
-      ...(skuText ? { sku: skuText } : {}),
-      price_override_kes: priceOverride,
-    };
-  });
-}
-
 function getTodayOrders(orders: AdminOrder[]) {
   const dateInKenya = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Africa/Nairobi",
@@ -181,10 +98,16 @@ export function AdminDashboard({
   const catalog = initialCatalog;
   const orders = initialOrders;
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
-  const [productForm, setProductForm] = useState(emptyProductForm);
   const [categoryName, setCategoryName] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  // Snapshot of a just-saved product. It stays valid only until the refreshed
+  // catalog arrives (catalog.products changes identity), then the fresh server
+  // data takes over automatically.
+  const [editingSnapshot, setEditingSnapshot] = useState<{
+    product: Product;
+    productsRef: Product[];
+  } | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [expandedOrderNumber, setExpandedOrderNumber] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
@@ -202,87 +125,31 @@ export function AdminDashboard({
       .map((variant) => ({ productName: product.name, variant })),
   );
 
+  const editingProduct =
+    editingSnapshot && editingSnapshot.productsRef === catalog.products
+      ? editingSnapshot.product
+      : (catalog.products.find((product) => product.id === editingProductId) ??
+        null);
+
   function startProductEdit(product: Product) {
     setEditingProductId(product.id);
-    setProductForm({
-      name: product.name,
-      slug: product.slug,
-      categoryId: product.category_id,
-      price: String(product.base_price_kes),
-      compareAtPrice:
-        product.compare_at_price_kes === null
-          ? ""
-          : String(product.compare_at_price_kes),
-      description: product.description ?? "",
-      variants: variantsToText(product.variants),
-      isActive: product.is_active,
-      isFeatured: product.is_featured,
-    });
+    setEditingSnapshot(null);
     setFormMessage("");
     setFormError("");
     setActiveSection("products");
   }
 
-  function saveProduct(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function handleProductSaved(product: Product, warnings: string[]) {
+    setEditingProductId(product.id);
+    setEditingSnapshot({ product, productsRef: catalog.products });
     setFormError("");
-    setFormMessage("");
+    setFormMessage(warnings[0] ?? "Product saved.");
+    router.refresh();
+  }
 
-    const category = catalog.categories.find(
-      (entry) => entry.id === productForm.categoryId,
-    );
-    const name = productForm.name.trim();
-    const slug = toSlug(productForm.slug || name);
-    const price = Number(productForm.price);
-    const compareAtPrice = productForm.compareAtPrice
-      ? Number(productForm.compareAtPrice)
-      : null;
-
-    if (
-      !category ||
-      !name ||
-      !slug ||
-      !Number.isSafeInteger(price) ||
-      price < 1 ||
-      (compareAtPrice !== null &&
-        (!Number.isSafeInteger(compareAtPrice) || compareAtPrice <= price))
-    ) {
-      setFormError(
-        "Enter a product name, slug, category, whole-shilling price, and a higher was price if used.",
-      );
-      return;
-    }
-
-    let variants: VariantInput[];
-    try {
-      variants = makeVariants(productForm.variants);
-    } catch (error) {
-      setFormError(showError(error, "Product variants are invalid."));
-      return;
-    }
-
-    startTransition(async () => {
-      try {
-        await saveProductAction({
-          id: editingProductId,
-          name,
-          slug,
-          category_id: category.id,
-          description: productForm.description.trim() || null,
-          base_price_kes: price,
-          compare_at_price_kes: compareAtPrice,
-          is_active: productForm.isActive,
-          is_featured: productForm.isFeatured,
-          variants,
-        });
-        setProductForm(emptyProductForm);
-        setEditingProductId(null);
-        setFormMessage("Product and variants saved.");
-        router.refresh();
-      } catch (error) {
-        setFormError(showError(error, "Product could not be saved."));
-      }
-    });
+  function cancelProductEdit() {
+    setEditingProductId(null);
+    setEditingSnapshot(null);
   }
 
   function startCategoryEdit(category: Category) {
@@ -329,9 +196,8 @@ export function AdminDashboard({
     startTransition(async () => {
       try {
         await deleteProductAction(product.id);
-        if (editingProductId === product.id) {
-          setEditingProductId(null);
-          setProductForm(emptyProductForm);
+        if (editingProduct?.id === product.id) {
+          cancelProductEdit();
         }
         setFormError("");
         setFormMessage("Product deleted.");
@@ -420,233 +286,30 @@ export function AdminDashboard({
               <MetricCard label="Today's paid revenue" value={formatKes(todayRevenue)} />
               <MetricCard label="Low-stock variants" value={String(lowStockVariants.length)} />
             </div>
-            <section className="rounded-2xl border border-border bg-surface p-5">
-              <h2 className="text-lg font-semibold">Low stock (2 or fewer)</h2>
-              {lowStockVariants.length ? (
-                <ul className="mt-4 grid gap-2">
-                  {lowStockVariants.map(({ productName, variant }) => (
-                    <li
-                      key={variant.id}
-                      className="flex flex-wrap justify-between gap-2 border-b border-border py-2 text-sm last:border-0"
-                    >
-                      <span>{productName} · {variant.size} · {variant.color}</span>
-                      <span className="font-semibold">{variant.stock_quantity} left</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  No variants are below the low-stock threshold.
-                </p>
-              )}
-            </section>
+            <LowStockPanel
+              products={catalog.products}
+              categories={catalog.categories}
+              onEditProduct={startProductEdit}
+            />
           </div>
         ) : null}
 
         {activeSection === "products" ? (
-          <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)]">
-            <form
-              onSubmit={saveProduct}
-              className="grid gap-4 rounded-2xl border border-border bg-surface p-5"
-            >
-              <h2 className="text-lg font-semibold">
-                {editingProductId ? "Edit product" : "Create product"}
-              </h2>
-              <AdminField label="Product name" name="product-name">
-                <input
-                  id="product-name"
-                  required
-                  value={productForm.name}
-                  onChange={(event) =>
-                    setProductForm((current) => ({ ...current, name: event.target.value }))
-                  }
-                  className={inputClassName}
-                />
-              </AdminField>
-              <AdminField label="Slug" name="product-slug">
-                <input
-                  id="product-slug"
-                  value={productForm.slug}
-                  onChange={(event) =>
-                    setProductForm((current) => ({ ...current, slug: event.target.value }))
-                  }
-                  placeholder="generated-from-name"
-                  className={inputClassName}
-                />
-              </AdminField>
-              <AdminField label="Category" name="product-category">
-                <select
-                  id="product-category"
-                  required
-                  value={productForm.categoryId}
-                  onChange={(event) =>
-                    setProductForm((current) => ({
-                      ...current,
-                      categoryId: event.target.value,
-                    }))
-                  }
-                  className={inputClassName}
-                >
-                  <option value="">Select category</option>
-                  {catalog.categories.map((category) => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
-                </select>
-              </AdminField>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <AdminField label="Price (KES)" name="product-price">
-                  <input
-                    id="product-price"
-                    type="number"
-                    min="1"
-                    step="1"
-                    required
-                    value={productForm.price}
-                    onChange={(event) =>
-                      setProductForm((current) => ({ ...current, price: event.target.value }))
-                    }
-                    className={inputClassName}
-                  />
-                </AdminField>
-                <AdminField label="Was price (KES)" name="product-compare-price">
-                  <input
-                    id="product-compare-price"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={productForm.compareAtPrice}
-                    onChange={(event) =>
-                      setProductForm((current) => ({
-                        ...current,
-                        compareAtPrice: event.target.value,
-                      }))
-                    }
-                    className={inputClassName}
-                  />
-                </AdminField>
-              </div>
-              <AdminField label="Description" name="product-description">
-                <textarea
-                  id="product-description"
-                  rows={3}
-                  value={productForm.description}
-                  onChange={(event) =>
-                    setProductForm((current) => ({
-                      ...current,
-                      description: event.target.value,
-                    }))
-                  }
-                  className={inputClassName}
-                />
-              </AdminField>
-              <AdminField
-                label="Variants (size,color,stock,sku,price override)"
-                name="product-variants"
-              >
-                <textarea
-                  id="product-variants"
-                  required
-                  rows={5}
-                  value={productForm.variants}
-                  onChange={(event) =>
-                    setProductForm((current) => ({
-                      ...current,
-                      variants: event.target.value,
-                    }))
-                  }
-                  aria-describedby="product-variants-help"
-                  className={inputClassName}
-                />
-                <span id="product-variants-help" className="text-xs text-muted-foreground">
-                  Example: M,Navy,4,SKU-001,2500. Leave SKU or price override empty to generate or use the product price.
-                </span>
-              </AdminField>
-              <label className="flex min-h-10 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={productForm.isActive}
-                  onChange={(event) =>
-                    setProductForm((current) => ({
-                      ...current,
-                      isActive: event.target.checked,
-                    }))
-                  }
-                  className="size-4 accent-primary"
-                />
-                Active
-              </label>
-              <label className="flex min-h-10 items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={productForm.isFeatured}
-                  onChange={(event) =>
-                    setProductForm((current) => ({
-                      ...current,
-                      isFeatured: event.target.checked,
-                    }))
-                  }
-                  className="size-4 accent-primary"
-                />
-                Featured
-              </label>
-              <div className="flex flex-wrap gap-2">
-                <button type="submit" disabled={isPending} className={primaryButtonClass}>
-                  {isPending ? "Saving..." : editingProductId ? "Save product" : "Create product"}
-                </button>
-                {editingProductId ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingProductId(null);
-                      setProductForm(emptyProductForm);
-                    }}
-                    className={secondaryButtonClass}
-                  >
-                    Cancel edit
-                  </button>
-                ) : null}
-              </div>
-            </form>
+          <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
+            <ProductForm
+              categories={catalog.categories}
+              product={editingProduct}
+              onSaved={handleProductSaved}
+              onCancel={cancelProductEdit}
+            />
 
-            <section className="grid gap-3">
-              <h2 className="text-lg font-semibold">
-                Products <span className="text-sm font-normal text-muted-foreground">({catalog.products.length})</span>
-              </h2>
-              {catalog.products.map((product) => (
-                <article
-                  key={product.id}
-                  className="grid gap-4 rounded-xl border border-border bg-surface p-4"
-                >
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <div>
-                      <h3 className="font-semibold">{product.name}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {formatKes(product.base_price_kes)} · {product.variants.length} variants ·{" "}
-                        {product.images.length} images · {product.is_active ? "Active" : "Inactive"}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startProductEdit(product)}
-                        className={secondaryButtonClass}
-                      >
-                        Edit product
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => removeProduct(product)}
-                        className={dangerButtonClass}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                  <ProductImageUpload productId={product.id} />
-                </article>
-              ))}
-            </section>
+            <ProductsPanel
+              products={catalog.products}
+              categories={catalog.categories}
+              isPending={isPending}
+              onEditProduct={startProductEdit}
+              onDeleteProduct={removeProduct}
+            />
           </div>
         ) : null}
 
@@ -812,64 +475,6 @@ export function AdminDashboard({
   );
 }
 
-function ProductImageUpload({ productId }: { productId: string }) {
-  const router = useRouter();
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [isPending, startTransition] = useTransition();
-
-  function submitImage(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setMessage("");
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    formData.set("productId", productId);
-
-    startTransition(async () => {
-      try {
-        await uploadProductImage(formData);
-        form.reset();
-        setMessage("Image uploaded.");
-        router.refresh();
-      } catch (uploadError) {
-        setError(showError(uploadError, "Image could not be uploaded."));
-      }
-    });
-  }
-
-  return (
-    <form
-      onSubmit={submitImage}
-      className="grid gap-3 border-t border-border pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
-    >
-      <label className="grid gap-1.5 text-sm font-medium">
-        Product image (JPG, PNG, or WebP; up to 5 MB)
-        <input
-          type="file"
-          name="file"
-          accept="image/jpeg,image/png,image/webp"
-          required
-          className="min-h-11 w-full rounded-lg border border-border bg-background px-2 py-2 text-sm"
-        />
-      </label>
-      <label className="grid gap-1.5 text-sm font-medium">
-        Alt text
-        <input
-          name="altText"
-          maxLength={200}
-          className={inputClassName}
-        />
-      </label>
-      <button type="submit" disabled={isPending} className={secondaryButtonClass}>
-        {isPending ? "Uploading..." : "Upload image"}
-      </button>
-      {message ? <StatusMessage tone="success">{message}</StatusMessage> : null}
-      {error ? <StatusMessage tone="danger">{error}</StatusMessage> : null}
-    </form>
-  );
-}
-
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <article className="rounded-xl border border-border bg-surface p-5">
@@ -902,5 +507,3 @@ const primaryButtonClass =
   "inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";
 const secondaryButtonClass =
   "inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold hover:bg-background disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";
-const dangerButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-lg border border-danger-border px-4 text-sm font-semibold text-danger hover:bg-danger-bg disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";
