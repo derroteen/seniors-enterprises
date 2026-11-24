@@ -50,9 +50,11 @@ export function SiteHeader({
     return () => window.clearTimeout(timer);
   }, [itemCount]);
 
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     setAccountMenuOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     if (!accountMenuOpen) {
