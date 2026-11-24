@@ -1,9 +1,14 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
 import { WhatsAppIcon } from "@/components/store/icons";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 
 export function WhatsAppFloatingButton() {
+  const pathname = usePathname();
   const href = getWhatsAppUrl("Hello, I have a question about Seniors Enterprises.");
-  if (!href) {
+  if (!href || pathname.startsWith("/admin")) {
     return null;
   }
 
