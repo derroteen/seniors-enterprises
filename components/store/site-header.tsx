@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { CartIcon, CloseIcon, MenuIcon } from "@/components/store/icons";
@@ -26,6 +27,10 @@ export function SiteHeader({
   showDashboard,
 }: SiteHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const accountTriggerRef = useRef<HTMLButtonElement>(null);
   const items = useCartStore((state) => state.items);
   const cartOpen = useCartStore((state) => state.drawerOpen);
   const openCartDrawer = useCartStore((state) => state.openDrawer);
@@ -44,6 +49,39 @@ export function SiteHeader({
     const timer = window.setTimeout(() => setBadgeBumped(false), 350);
     return () => window.clearTimeout(timer);
   }, [itemCount]);
+
+  useEffect(() => {
+    setAccountMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!accountMenuOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(event.target as Node)
+      ) {
+        setAccountMenuOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setAccountMenuOpen(false);
+        accountTriggerRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [accountMenuOpen]);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur">
@@ -100,16 +138,26 @@ export function SiteHeader({
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0">
             <ThemeToggle />
             {isSignedIn ? (
-              <details className="relative">
-                <summary
+              <div className="relative" ref={accountMenuRef}>
+                <button
+                  ref={accountTriggerRef}
+                  type="button"
                   aria-label="Account options"
-                  className="flex min-h-11 cursor-pointer list-none items-center rounded-lg border border-border bg-surface px-2 text-sm font-medium hover:bg-background sm:px-3 [&::-webkit-details-marker]:hidden"
+                  aria-expanded={accountMenuOpen}
+                  aria-haspopup="true"
+                  onClick={() => setAccountMenuOpen((isOpen) => !isOpen)}
+                  className="flex min-h-11 items-center rounded-lg border border-border bg-surface px-2 text-sm font-medium hover:bg-background sm:px-3"
                 >
                   Account
-                </summary>
-                <div className="absolute right-0 top-full z-50 mt-2 grid w-48 gap-1 rounded-xl border border-border bg-surface p-2 shadow-lg">
+                </button>
+                <div
+                  className={`absolute right-0 top-full z-50 mt-2 grid w-48 gap-1 rounded-xl border border-border bg-surface p-2 shadow-lg${
+                    accountMenuOpen ? "" : " hidden"
+                  }`}
+                >
                   <Link
                     href="/account"
+                    onClick={() => setAccountMenuOpen(false)}
                     className="rounded-lg px-3 py-2.5 text-sm hover:bg-background"
                   >
                     My account
@@ -117,6 +165,7 @@ export function SiteHeader({
                   {showDashboard ? (
                     <Link
                       href="/admin"
+                      onClick={() => setAccountMenuOpen(false)}
                       className="rounded-lg px-3 py-2.5 text-sm hover:bg-background"
                     >
                       Dashboard
@@ -125,13 +174,14 @@ export function SiteHeader({
                   <form action={signOut}>
                     <button
                       type="submit"
+                      onClick={() => setAccountMenuOpen(false)}
                       className="w-full rounded-lg px-3 py-2.5 text-left text-sm hover:bg-background"
                     >
                       Sign out
                     </button>
                   </form>
                 </div>
-              </details>
+              </div>
             ) : (
               <Link
                 href="/login"
