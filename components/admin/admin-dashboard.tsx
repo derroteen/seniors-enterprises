@@ -10,7 +10,9 @@ import {
   saveCategory as saveCategoryAction,
   updateOrderStatus as updateOrderStatusAction,
 } from "@/app/admin/actions";
+import { LowStockPanel } from "@/components/admin/low-stock-panel";
 import { ProductForm } from "@/components/admin/product-form";
+import { ProductsPanel } from "@/components/admin/products-panel";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { StatusBadge, StatusMessage } from "@/components/ui/status-message";
@@ -284,26 +286,11 @@ export function AdminDashboard({
               <MetricCard label="Today's paid revenue" value={formatKes(todayRevenue)} />
               <MetricCard label="Low-stock variants" value={String(lowStockVariants.length)} />
             </div>
-            <section className="rounded-2xl border border-border bg-surface p-5">
-              <h2 className="text-lg font-semibold">Low stock (2 or fewer)</h2>
-              {lowStockVariants.length ? (
-                <ul className="mt-4 grid gap-2">
-                  {lowStockVariants.map(({ productName, variant }) => (
-                    <li
-                      key={variant.id}
-                      className="flex flex-wrap justify-between gap-2 border-b border-border py-2 text-sm last:border-0"
-                    >
-                      <span>{productName} · {variant.size} · {variant.color}</span>
-                      <span className="font-semibold">{variant.stock_quantity} left</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  No variants are below the low-stock threshold.
-                </p>
-              )}
-            </section>
+            <LowStockPanel
+              products={catalog.products}
+              categories={catalog.categories}
+              onEditProduct={startProductEdit}
+            />
           </div>
         ) : null}
 
@@ -316,44 +303,13 @@ export function AdminDashboard({
               onCancel={cancelProductEdit}
             />
 
-            <section className="grid content-start gap-3">
-              <h2 className="text-lg font-semibold">
-                Products <span className="text-sm font-normal text-muted-foreground">({catalog.products.length})</span>
-              </h2>
-              {catalog.products.map((product) => (
-                <article
-                  key={product.id}
-                  className="grid gap-4 rounded-xl border border-border bg-surface p-4"
-                >
-                  <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                    <div>
-                      <h3 className="font-semibold">{product.name}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {formatKes(product.base_price_kes)} · {product.variants.length} variants ·{" "}
-                        {product.images.length} images · {product.is_active ? "Active" : "Inactive"}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startProductEdit(product)}
-                        className={secondaryButtonClass}
-                      >
-                        Edit product
-                      </button>
-                      <button
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => removeProduct(product)}
-                        className={dangerButtonClass}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </section>
+            <ProductsPanel
+              products={catalog.products}
+              categories={catalog.categories}
+              isPending={isPending}
+              onEditProduct={startProductEdit}
+              onDeleteProduct={removeProduct}
+            />
           </div>
         ) : null}
 
@@ -551,5 +507,3 @@ const primaryButtonClass =
   "inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";
 const secondaryButtonClass =
   "inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold hover:bg-background disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";
-const dangerButtonClass =
-  "inline-flex min-h-11 items-center justify-center rounded-lg border border-danger-border px-4 text-sm font-semibold text-danger hover:bg-danger-bg disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100";
