@@ -293,7 +293,7 @@ export function AdminDashboard({
         ) : null}
 
         {activeSection === "dashboard" ? (
-          <div className="mt-6 grid gap-6">
+          <div className="mt-6 grid min-w-0 gap-6">
             <div className="grid gap-4 sm:grid-cols-3">
               <MetricCard label="Today's orders" value={String(todayOrders.length)} />
               <MetricCard label="Today's paid revenue" value={formatKes(todayRevenue)} />
@@ -308,7 +308,7 @@ export function AdminDashboard({
         ) : null}
 
         {activeSection === "products" ? (
-          <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
+          <div className="mt-6 grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
             <ProductForm
               categories={catalog.categories}
               product={editingProduct}
@@ -328,10 +328,10 @@ export function AdminDashboard({
         ) : null}
 
         {activeSection === "categories" ? (
-          <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)]">
+          <div className="mt-6 grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(18rem,0.7fr)_minmax(0,1.3fr)]">
             <form
               onSubmit={saveCategory}
-              className="grid gap-4 rounded-2xl border border-border bg-surface p-5"
+              className="grid min-w-0 gap-4 rounded-2xl border border-border bg-surface p-5"
             >
               <h2 className="text-lg font-semibold">
                 {editingCategoryId ? "Edit category" : "Create category"}
@@ -378,16 +378,16 @@ export function AdminDashboard({
                 ) : null}
               </div>
             </form>
-            <section className="grid gap-3">
+            <section className="grid min-w-0 gap-3">
               <h2 className="text-lg font-semibold">Categories ({catalog.categories.length})</h2>
               {catalog.categories.map((category) => (
                 <article
                   key={category.id}
                   className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface p-4"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="font-semibold">{category.name}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">/{category.slug}</p>
+                    <p className="mt-1 break-words text-sm text-muted-foreground">/{category.slug}</p>
                   </div>
                   <button
                     type="button"
@@ -403,7 +403,7 @@ export function AdminDashboard({
         ) : null}
 
         {activeSection === "orders" ? (
-          <section className="mt-6 grid gap-4">
+          <section className="mt-6 grid min-w-0 gap-4">
             <div>
               <h2 className="text-lg font-semibold">Orders ({orders.length})</h2>
               {orderError ? (
@@ -417,7 +417,7 @@ export function AdminDashboard({
                 key={order.order_number}
                 className="rounded-xl border border-border bg-surface p-4 sm:p-5"
               >
-                <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-semibold">{order.order_number} · {order.customer_name}</h3>
@@ -477,8 +477,10 @@ export function AdminDashboard({
                     <ul className="grid gap-2">
                       {order.items.map((item) => (
                         <li key={item.id} className="flex justify-between gap-3">
-                          <span>{item.product_name_snapshot} × {item.quantity}</span>
-                          <span>{formatKes(item.unit_price_kes * item.quantity)}</span>
+                          <span className="min-w-0 break-words">
+                            {item.product_name_snapshot} × {item.quantity}
+                          </span>
+                          <span className="shrink-0">{formatKes(item.unit_price_kes * item.quantity)}</span>
                         </li>
                       ))}
                     </ul>

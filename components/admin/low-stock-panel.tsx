@@ -19,7 +19,7 @@ interface LowStockPanelProps {
 }
 
 const chipBase =
-  "inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 
 function stockChipClass(stock: number, threshold: number) {
   if (stock === 0) {
@@ -53,7 +53,7 @@ function ProductStockRow({
         type="button"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
-        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="flex min-h-11 w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <span className="relative size-11 shrink-0 overflow-hidden rounded-lg border border-border bg-surface">
           {image ? (
@@ -67,8 +67,8 @@ function ProductStockRow({
             />
           ) : null}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold">
+        <span className="min-w-0 grow basis-48">
+          <span className="block truncate text-sm font-semibold" title={product.name}>
             {product.name}
           </span>
           <span className="block text-xs text-muted-foreground">
@@ -174,7 +174,7 @@ export function LowStockPanel({
   }
 
   return (
-    <section className="rounded-2xl border border-border bg-surface p-5">
+    <section className="min-w-0 rounded-2xl border border-border bg-surface p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Low stock</h2>
         <div
@@ -207,7 +207,7 @@ export function LowStockPanel({
       </p>
 
       {chips.length > 1 ? (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
           <button
             type="button"
             onClick={() => setCategoryFilter(null)}

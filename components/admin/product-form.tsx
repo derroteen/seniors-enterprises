@@ -247,7 +247,7 @@ export function ProductForm({
   return (
     <form
       onSubmit={save}
-      className="grid content-start gap-5 rounded-2xl border border-border bg-surface p-5"
+      className="grid min-w-0 content-start gap-5 rounded-2xl border border-border bg-surface p-5"
     >
       <h2 className="text-lg font-semibold">
         {product ? "Edit product" : "Create product"}

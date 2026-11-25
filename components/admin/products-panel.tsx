@@ -24,7 +24,7 @@ interface ProductsPanelProps {
 const PAGE_SIZE = 20;
 
 const chipBase =
-  "inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
+  "inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
 const secondaryButtonClass =
   "inline-flex min-h-10 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-60";
 const dangerButtonClass =
@@ -94,7 +94,7 @@ function ProductRow({
         type="button"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
-        className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className="flex min-h-11 w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         <span className="relative size-11 shrink-0 overflow-hidden rounded-lg border border-border bg-surface">
           {image ? (
@@ -108,8 +108,8 @@ function ProductRow({
             />
           ) : null}
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold">
+        <span className="min-w-0 grow basis-48">
+          <span className="block truncate text-sm font-semibold" title={product.name}>
             {product.name}
           </span>
           <span className="block truncate text-xs text-muted-foreground">
@@ -201,7 +201,7 @@ export function ProductsPanel({
   const visibleItems = items.slice(0, visibleCount);
 
   return (
-    <section className="grid content-start gap-3">
+    <section className="grid min-w-0 content-start gap-3">
       <h2 className="text-lg font-semibold">
         Products{" "}
         <span className="text-sm font-normal text-muted-foreground">
@@ -223,7 +223,7 @@ export function ProductsPanel({
           className="min-h-11 w-full rounded-lg border border-border bg-background px-3 text-foreground placeholder:text-muted-foreground"
         />
         {categories.length > 1 ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             <button
               type="button"
               onClick={() => {
