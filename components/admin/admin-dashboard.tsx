@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -122,6 +129,9 @@ export function AdminDashboard({
   const [savingCategory, setSavingCategory] = useState(false);
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [updatingOrderNumber, setUpdatingOrderNumber] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [focusFormSignal, setFocusFormSignal] = useState(0);
+  const formPanelRef = useRef<HTMLDivElement>(null);
 
   const todayOrders = useMemo(() => getTodayOrders(orders), [orders]);
   const todayRevenue = todayOrders
@@ -135,12 +145,47 @@ export function AdminDashboard({
       : (catalog.products.find((product) => product.id === editingProductId) ??
         null);
 
+  useEffect(() => {
+    if (focusFormSignal === 0) {
+      return;
+    }
+    formPanelRef.current?.scrollIntoView({ block: "start" });
+    document.getElementById("product-name")?.focus({ preventScroll: true });
+  }, [focusFormSignal]);
+
   function startProductEdit(product: Product) {
     setEditingProductId(product.id);
     setEditingSnapshot(null);
     setFormMessage("");
     setFormError("");
+    setFormOpen(true);
+    setFocusFormSignal((signal) => signal + 1);
     setActiveSection("products");
+  }
+
+  function startNewProduct() {
+    setEditingProductId(null);
+    setEditingSnapshot(null);
+    setFormMessage("");
+    setFormError("");
+    setFormOpen(true);
+    setActiveSection("products");
+  }
+
+  function handleProductFormCancel() {
+    if (!editingProductId) {
+      setFormError("");
+      setFormMessage("");
+      return;
+    }
+    const rowProductId = editingProductId;
+    cancelProductEdit();
+    setFormOpen(false);
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`product-row-${rowProductId}`)
+        ?.scrollIntoView({ block: "center" });
+    });
   }
 
   function handleProductSaved(product: Product, warnings: string[]) {
@@ -148,6 +193,7 @@ export function AdminDashboard({
     setEditingSnapshot({ product, productsRef: catalog.products });
     setFormError("");
     setFormMessage(warnings[0] ?? "Product saved.");
+    setFormOpen(false);
     router.refresh();
   }
 
@@ -313,18 +359,27 @@ export function AdminDashboard({
 
         {activeSection === "products" ? (
           <div className="mt-6 grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(18rem,0.8fr)]">
-            <ProductForm
-              categories={catalog.categories}
-              product={editingProduct}
-              onSaved={handleProductSaved}
-              onCancel={cancelProductEdit}
-            />
+            <div
+              id="product-form-panel"
+              ref={formPanelRef}
+              className={`min-w-0 ${formOpen ? "" : "hidden lg:block"}`}
+            >
+              <ProductForm
+                categories={catalog.categories}
+                product={editingProduct}
+                onSaved={handleProductSaved}
+                onCancel={handleProductFormCancel}
+                onClose={() => setFormOpen(false)}
+              />
+            </div>
 
             <ProductsPanel
               products={catalog.products}
               categories={catalog.categories}
               isPending={isPending}
               deletingProductId={deletingProductId}
+              formOpen={formOpen}
+              onNewProduct={startNewProduct}
               onEditProduct={startProductEdit}
               onDeleteProduct={removeProduct}
             />

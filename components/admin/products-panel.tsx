@@ -17,6 +17,8 @@ interface ProductsPanelProps {
   categories: Category[];
   isPending: boolean;
   deletingProductId: string | null;
+  formOpen: boolean;
+  onNewProduct: () => void;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (product: Product) => void;
 }
@@ -89,7 +91,10 @@ function ProductRow({
   const image = product.images[0];
 
   return (
-    <li className="rounded-xl border border-border bg-background">
+    <li
+      id={`product-row-${product.id}`}
+      className="rounded-xl border border-border bg-background"
+    >
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
@@ -171,6 +176,8 @@ export function ProductsPanel({
   categories,
   isPending,
   deletingProductId,
+  formOpen,
+  onNewProduct,
   onEditProduct,
   onDeleteProduct,
 }: ProductsPanelProps) {
@@ -202,13 +209,24 @@ export function ProductsPanel({
 
   return (
     <section className="grid min-w-0 content-start gap-3">
-      <h2 className="text-lg font-semibold">
-        Products{" "}
-        <span className="text-sm font-normal text-muted-foreground">
-          ({items.length}
-          {items.length !== products.length ? ` of ${products.length}` : ""})
-        </span>
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">
+          Products{" "}
+          <span className="text-sm font-normal text-muted-foreground">
+            ({items.length}
+            {items.length !== products.length ? ` of ${products.length}` : ""})
+          </span>
+        </h2>
+        <button
+          type="button"
+          onClick={onNewProduct}
+          aria-expanded={formOpen}
+          aria-controls="product-form-panel"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-lg border border-border px-4 text-sm font-semibold hover:bg-background focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary lg:hidden"
+        >
+          New product
+        </button>
+      </div>
 
       <div className="grid gap-2">
         <input

@@ -21,6 +21,8 @@ interface ProductFormProps {
   product: Product | null;
   onSaved: (product: Product, warnings: string[]) => void;
   onCancel: () => void;
+  /** Hides the form panel on small screens; ignored at lg and up. */
+  onClose?: () => void;
 }
 
 function toSlug(value: string) {
@@ -40,6 +42,7 @@ export function ProductForm({
   product,
   onSaved,
   onCancel,
+  onClose,
 }: ProductFormProps) {
   const productId = product?.id ?? null;
   const [loadedProductId, setLoadedProductId] = useState<string | null>(productId);
@@ -65,6 +68,7 @@ export function ProductForm({
   const [message, setMessage] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [isPending, setIsPending] = useState(false);
+  const [builderNonce, setBuilderNonce] = useState(0);
 
   // Load a different product (or reset for a new one) without remounting. When
   // a just-created product turns into an edit (null → id), keep queued photos
@@ -96,6 +100,31 @@ export function ProductForm({
       setPhotoWarning("");
     }
   }, [productId, loadedProductId, product]);
+
+  function clearForm() {
+    setName("");
+    setSlug("");
+    setSlugEdited(false);
+    setSlugEditing(false);
+    setCategoryId("");
+    setPrice("");
+    setCompareAtPrice("");
+    setDescription("");
+    setIsActive(true);
+    setIsFeatured(false);
+    setVariantRows([]);
+    setPendingPhotos((current) => {
+      for (const photo of current) {
+        URL.revokeObjectURL(photo.previewUrl);
+      }
+      return [];
+    });
+    setPhotoWarning("");
+    setError("");
+    setMessage("");
+    setWarnings([]);
+    setBuilderNonce((nonce) => nonce + 1);
+  }
 
   const handleRowsChange = useCallback((rows: VariantPayloadRow[]) => {
     setVariantRows(rows);
@@ -249,9 +278,21 @@ export function ProductForm({
       onSubmit={save}
       className="grid min-w-0 content-start gap-5 rounded-2xl border border-border bg-surface p-5"
     >
-      <h2 className="text-lg font-semibold">
-        {product ? "Edit product" : "Create product"}
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold">
+          {product ? "Edit product" : "Create product"}
+        </h2>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close product form"
+            className="inline-flex min-h-11 items-center rounded-lg border border-border px-3 text-sm font-semibold hover:bg-background lg:hidden"
+          >
+            Close
+          </button>
+        ) : null}
+      </div>
 
       {error ? <StatusMessage tone="danger">{error}</StatusMessage> : null}
       {message ? <StatusMessage tone="success">{message}</StatusMessage> : null}
@@ -399,7 +440,7 @@ export function ProductForm({
       </div>
 
       <VariantBuilder
-        key={productId ?? "new"}
+        key={`${productId ?? "new"}-${builderNonce}`}
         productName={name.trim() || "product"}
         initialVariants={product?.variants}
         onRowsChange={handleRowsChange}
@@ -460,7 +501,12 @@ export function ProductForm({
         </SubmitButton>
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => {
+            if (!product) {
+              clearForm();
+            }
+            onCancel();
+          }}
           className="inline-flex min-h-12 items-center justify-center rounded-lg border border-border px-4 text-sm font-semibold hover:bg-background"
         >
           {product ? "Cancel" : "Clear form"}
