@@ -471,7 +471,8 @@ export function ProductForm({
           <span>
             <span className="block font-medium">Show in shop</span>
             <span className="block text-xs text-muted-foreground">
-              Customers can see and buy it.
+              Turn off to hide this product from customers. It stays in this
+              list marked Hidden.
             </span>
           </span>
         </label>

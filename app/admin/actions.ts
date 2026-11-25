@@ -36,7 +36,7 @@ const productSchema = z
     description: z.string().trim().max(5_000).nullable(),
     base_price_kes: z.number().int().positive(),
     compare_at_price_kes: z.number().int().positive().nullable(),
-    is_active: z.boolean(),
+    is_active: z.boolean().optional(),
     is_featured: z.boolean(),
     variants: z.array(variantSchema).min(1).max(300),
   })
@@ -214,8 +214,12 @@ export async function saveProduct(input: unknown): Promise<{
     category_id: product.category_id,
     base_price_kes: product.base_price_kes,
     compare_at_price_kes: product.compare_at_price_kes,
-    is_active: product.is_active,
     is_featured: product.is_featured,
+    ...(product.is_active === undefined
+      ? product.id
+        ? {}
+        : { is_active: true }
+      : { is_active: product.is_active }),
   };
   const savedProductResult = product.id
     ? await client
