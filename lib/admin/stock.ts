@@ -54,6 +54,9 @@ export function summarizeNeedsRestock(
 ): StockLevelCounts {
   const totals: StockLevelCounts = { low: 0, soldOut: 0 };
   for (const product of products) {
+    if (!product.is_active) {
+      continue;
+    }
     const counts = getStockLevelCounts(product.variants, threshold);
     totals.low += counts.low;
     totals.soldOut += counts.soldOut;
@@ -191,7 +194,7 @@ export function buildLowStockView(
   let soldOutVariantCount = 0;
 
   for (const product of products) {
-    if (categoryId && product.category_id !== categoryId) {
+    if (!product.is_active || (categoryId && product.category_id !== categoryId)) {
       continue;
     }
     const item = buildProductStockItem(product, threshold, showAllSizes);
@@ -235,6 +238,9 @@ export function buildLowStockCategoryChips(
 ): { category: Category; count: number }[] {
   const counts = new Map<string, number>();
   for (const product of products) {
+    if (!product.is_active) {
+      continue;
+    }
     const { low, soldOut } = getStockLevelCounts(product.variants, threshold);
     const needingRestock = low + soldOut;
     if (needingRestock > 0) {
@@ -301,7 +307,7 @@ export function filterProductsForList(
     .map((product) => ({
       product,
       totalStock: productTotalStock(product),
-      lowStock: productHasLowStock(product),
+      lowStock: product.is_active && productHasLowStock(product),
       categoryName: categoryNameById.get(product.category_id) ?? "",
     }));
 }
