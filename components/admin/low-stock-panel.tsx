@@ -7,6 +7,7 @@ import {
   buildLowStockCategoryChips,
   buildLowStockView,
   DEFAULT_LOW_STOCK_THRESHOLD,
+  formatStockLevelCounts,
   LOW_STOCK_THRESHOLDS,
   type ProductStockItem,
 } from "@/lib/admin/stock";
@@ -43,6 +44,10 @@ function ProductStockRow({
   const [open, setOpen] = useState(false);
   const { product } = item;
   const image = product.images[0];
+  const stockBadge = formatStockLevelCounts({
+    low: item.lowCount,
+    soldOut: item.soldOutCount,
+  });
   const colorCount = new Set(product.variants.map((variant) => variant.color))
     .size;
   const showColor = colorCount > 1;
@@ -75,15 +80,17 @@ function ProductStockRow({
             {item.totalStock} in stock
           </span>
         </span>
-        {item.allSoldOut ? (
-          <span className="shrink-0 rounded-full bg-danger-bg px-2.5 py-1 text-xs font-semibold text-danger">
-            Sold out
+        {stockBadge ? (
+          <span
+            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
+              item.allSoldOut
+                ? "bg-danger-bg text-danger"
+                : "bg-warning-bg text-warning"
+            }`}
+          >
+            {stockBadge}
           </span>
-        ) : (
-          <span className="shrink-0 rounded-full bg-warning-bg px-2.5 py-1 text-xs font-semibold text-warning">
-            {item.lowCount} low
-          </span>
-        )}
+        ) : null}
         <span aria-hidden="true" className="shrink-0 text-muted-foreground">
           {open ? "▾" : "▸"}
         </span>
@@ -279,9 +286,17 @@ export function LowStockPanel({
                 >
                   <span className="font-semibold">{group.category.name}</span>
                   <span className="text-sm text-muted-foreground">
-                    {group.products.length}{" "}
-                    {group.products.length === 1 ? "product" : "products"} ·{" "}
-                    {group.lowVariantCount} low
+                    {[
+                      `${group.products.length} ${
+                        group.products.length === 1 ? "product" : "products"
+                      }`,
+                      group.lowCount > 0 ? `${group.lowCount} low` : null,
+                      group.soldOutCount > 0
+                        ? `${group.soldOutCount} sold out`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
                   <span aria-hidden="true" className="text-muted-foreground">
                     {collapsed ? "▸" : "▾"}

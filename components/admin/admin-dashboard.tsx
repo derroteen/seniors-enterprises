@@ -11,6 +11,10 @@ import {
   updateOrderStatus as updateOrderStatusAction,
 } from "@/app/admin/actions";
 import { LowStockPanel } from "@/components/admin/low-stock-panel";
+import {
+  formatStockLevelCounts,
+  summarizeNeedsRestock,
+} from "@/lib/admin/stock";
 import { ProductForm } from "@/components/admin/product-form";
 import { ProductsPanel } from "@/components/admin/products-panel";
 import { Container } from "@/components/ui/container";
@@ -123,11 +127,7 @@ export function AdminDashboard({
   const todayRevenue = todayOrders
     .filter((order) => order.payment_status === "paid")
     .reduce((total, order) => total + order.total_kes, 0);
-  const lowStockVariants = catalog.products.flatMap((product) =>
-    product.variants
-      .filter((variant) => variant.stock_quantity <= 2)
-      .map((variant) => ({ productName: product.name, variant })),
-  );
+  const restockCounts = summarizeNeedsRestock(catalog.products);
 
   const editingProduct =
     editingSnapshot && editingSnapshot.productsRef === catalog.products
@@ -297,7 +297,11 @@ export function AdminDashboard({
             <div className="grid gap-4 sm:grid-cols-3">
               <MetricCard label="Today's orders" value={String(todayOrders.length)} />
               <MetricCard label="Today's paid revenue" value={formatKes(todayRevenue)} />
-              <MetricCard label="Low-stock variants" value={String(lowStockVariants.length)} />
+              <MetricCard
+                label="Needs restocking"
+                value={String(restockCounts.low + restockCounts.soldOut)}
+                detail={formatStockLevelCounts(restockCounts)}
+              />
             </div>
             <LowStockPanel
               products={catalog.products}
@@ -499,11 +503,22 @@ export function AdminDashboard({
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string }) {
+function MetricCard({
+  detail,
+  label,
+  value,
+}: {
+  detail?: string;
+  label: string;
+  value: string;
+}) {
   return (
     <article className="rounded-xl border border-border bg-surface p-5">
       <p className="text-sm text-muted-foreground">{label}</p>
       <p className="mt-2 font-display text-3xl font-semibold">{value}</p>
+      {detail ? (
+        <p className="mt-1 text-sm text-muted-foreground">{detail}</p>
+      ) : null}
     </article>
   );
 }

@@ -8,6 +8,59 @@ export const DEFAULT_LOW_STOCK_THRESHOLD = 2;
 /** Flag used on the products list; matches the dashboard default. */
 export const PRODUCTS_LOW_STOCK_FLAG = 2;
 
+export interface StockLevelCounts {
+  /** Variants with 0 < stock <= threshold (LOW). */
+  low: number;
+  /** Variants with stock === 0 (SOLD OUT). */
+  soldOut: number;
+}
+
+/**
+ * Single source of truth for LOW and SOLD OUT counts. LOW means stock is
+ * above 0 and at or below the threshold; SOLD OUT means stock is exactly 0.
+ */
+export function getStockLevelCounts(
+  variants: Pick<ProductVariant, "stock_quantity">[],
+  threshold: number,
+): StockLevelCounts {
+  let low = 0;
+  let soldOut = 0;
+  for (const variant of variants) {
+    if (variant.stock_quantity === 0) {
+      soldOut += 1;
+    } else if (variant.stock_quantity <= threshold) {
+      low += 1;
+    }
+  }
+  return { low, soldOut };
+}
+
+/** "5 low · 4 sold out", omitting zero parts; "" when nothing needs restocking. */
+export function formatStockLevelCounts({ low, soldOut }: StockLevelCounts) {
+  const parts: string[] = [];
+  if (low > 0) {
+    parts.push(`${low} low`);
+  }
+  if (soldOut > 0) {
+    parts.push(`${soldOut} sold out`);
+  }
+  return parts.join(" · ");
+}
+
+/** LOW + SOLD OUT across the given products at the given threshold. */
+export function summarizeNeedsRestock(
+  products: Product[],
+  threshold = DEFAULT_LOW_STOCK_THRESHOLD,
+): StockLevelCounts {
+  const totals: StockLevelCounts = { low: 0, soldOut: 0 };
+  for (const product of products) {
+    const counts = getStockLevelCounts(product.variants, threshold);
+    totals.low += counts.low;
+    totals.soldOut += counts.soldOut;
+  }
+  return totals;
+}
+
 export interface StockVariantRow {
   variant: ProductVariant;
   /** Position of the size label in the logical size order. */
@@ -33,8 +86,10 @@ export interface ProductStockItem {
 
 export interface CategoryStockGroup {
   category: Category;
-  /** Number of variants at or under the threshold in this category. */
-  lowVariantCount: number;
+  /** LOW variants (0 < stock <= threshold) in this category. */
+  lowCount: number;
+  /** SOLD OUT variants (stock === 0) in this category. */
+  soldOutCount: number;
   products: ProductStockItem[];
 }
 
@@ -81,13 +136,10 @@ function buildProductStockItem(
     (total, variant) => total + variant.stock_quantity,
     0,
   );
-  const soldOutCount = product.variants.filter(
-    (variant) => variant.stock_quantity === 0,
-  ).length;
-  const lowCount = product.variants.filter(
-    (variant) =>
-      variant.stock_quantity > 0 && variant.stock_quantity <= threshold,
-  ).length;
+  const { low: lowCount, soldOut: soldOutCount } = getStockLevelCounts(
+    product.variants,
+    threshold,
+  );
   const minStock = product.variants.length
     ? Math.min(...product.variants.map((variant) => variant.stock_quantity))
     : 0;
@@ -146,13 +198,8 @@ export function buildLowStockView(
     if (!item) {
       continue;
     }
-    for (const { variant } of item.allRows) {
-      if (variant.stock_quantity === 0) {
-        soldOutVariantCount += 1;
-      } else if (variant.stock_quantity <= threshold) {
-        lowVariantCount += 1;
-      }
-    }
+    lowVariantCount += item.lowCount;
+    soldOutVariantCount += item.soldOutCount;
     const list = itemsByCategory.get(product.category_id) ?? [];
     list.push(item);
     itemsByCategory.set(product.category_id, list);
@@ -164,15 +211,14 @@ export function buildLowStockView(
       const items = (itemsByCategory.get(category.id) ?? []).sort(
         compareProductStockItems,
       );
-      const lowVariantCountForCategory = items.reduce(
-        (total, item) =>
-          total +
-          item.allRows.filter(
-            ({ variant }) => variant.stock_quantity <= threshold,
-          ).length,
-        0,
+      const counts = items.reduce(
+        (total, item) => ({
+          lowCount: total.lowCount + item.lowCount,
+          soldOutCount: total.soldOutCount + item.soldOutCount,
+        }),
+        { lowCount: 0, soldOutCount: 0 },
       );
-      return { category, lowVariantCount: lowVariantCountForCategory, products: items };
+      return { category, ...counts, products: items };
     })
     // Categories without low items are hidden; keep catalog order otherwise.
     .filter((group) => group.products.length > 0);
@@ -189,13 +235,13 @@ export function buildLowStockCategoryChips(
 ): { category: Category; count: number }[] {
   const counts = new Map<string, number>();
   for (const product of products) {
-    for (const variant of product.variants) {
-      if (variant.stock_quantity <= threshold) {
-        counts.set(
-          product.category_id,
-          (counts.get(product.category_id) ?? 0) + 1,
-        );
-      }
+    const { low, soldOut } = getStockLevelCounts(product.variants, threshold);
+    const needingRestock = low + soldOut;
+    if (needingRestock > 0) {
+      counts.set(
+        product.category_id,
+        (counts.get(product.category_id) ?? 0) + needingRestock,
+      );
     }
   }
   return categories
@@ -221,7 +267,9 @@ export function productTotalStock(product: Product) {
 }
 
 export function productHasLowStock(product: Product, threshold = PRODUCTS_LOW_STOCK_FLAG) {
-  return product.variants.some((variant) => variant.stock_quantity <= threshold);
+  return product.variants.some(
+    (variant) => variant.stock_quantity > 0 && variant.stock_quantity <= threshold,
+  );
 }
 
 export function filterProductsForList(
