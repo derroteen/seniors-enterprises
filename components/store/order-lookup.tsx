@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { z } from "zod";
 
 import { StatusBadge, StatusMessage } from "@/components/ui/status-message";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { mockRepository } from "@/lib/data/mock/repository";
 import type { OrderLookupResult } from "@/lib/data/types";
 import { formatKes } from "@/lib/store-format";
@@ -140,13 +141,13 @@ export function OrderLookup({ initialOrderNumber = "" }: OrderLookupProps) {
             />
           </div>
         </div>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="mt-auto inline-flex min-h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100"
+        <SubmitButton
+          pending={isLoading}
+          pendingLabel="Looking up order…"
+          className="mt-auto min-h-11 justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100"
         >
-          {isLoading ? "Looking up…" : "Look up order"}
-        </button>
+          Look up order
+        </SubmitButton>
       </form>
 
       {message ? (

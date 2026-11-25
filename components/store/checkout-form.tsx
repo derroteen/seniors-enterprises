@@ -19,8 +19,8 @@ import { mockRepository, saveMockOrder } from "@/lib/data/mock/repository";
 import type { DemoPaymentOutcome } from "@/lib/payments/types";
 import { mockPaymentProvider } from "@/lib/payments/mock";
 import { formatKes } from "@/lib/store-format";
-import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { StatusIcon, StatusMessage } from "@/components/ui/status-message";
@@ -439,11 +439,13 @@ export function CheckoutForm({
               </StatusMessage>
             ) : null}
 
-            <Button type="submit" size="lg" disabled={isSubmitting} className="w-full">
-              {isSubmitting
-                ? "Creating your order…"
-                : `${isDemoMode ? "Place demo order" : "Place order"} · ${formatKes(total)}`}
-            </Button>
+            <SubmitButton
+              pending={isSubmitting}
+              pendingLabel="Placing order…"
+              className="w-full min-h-12 justify-center rounded-lg bg-primary px-6 text-base font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100"
+            >
+              {`${isDemoMode ? "Place demo order" : "Place order"} · ${formatKes(total)}`}
+            </SubmitButton>
           </form>
 
           <aside className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
