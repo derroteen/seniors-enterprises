@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { signUp } from "@/app/(store)/auth/actions";
 import { StatusMessage } from "@/components/ui/status-message";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export function SignupForm({ hasError }: { hasError: boolean }) {
   const [showPasswords, setShowPasswords] = useState(false);
@@ -79,9 +80,9 @@ export function SignupForm({ hasError }: { hasError: boolean }) {
         />
         Show passwords
       </label>
-      <button type="submit" className={primaryButtonClass}>
+      <SubmitButton pendingLabel="Creating account…" className={primaryButtonClass}>
         Create your account
-      </button>
+      </SubmitButton>
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link href="/login" className="font-semibold text-primary hover:underline">

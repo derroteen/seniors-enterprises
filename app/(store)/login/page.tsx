@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { signIn } from "@/app/(store)/auth/actions";
 import { Container } from "@/components/ui/container";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { StatusMessage } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
@@ -74,9 +75,9 @@ export default async function LoginPage({
                 className={inputClassName}
               />
             </label>
-            <button type="submit" className={primaryButtonClass}>
+            <SubmitButton pendingLabel="Signing in…" className={primaryButtonClass}>
               Sign in
-            </button>
+            </SubmitButton>
           </form>
           <div className="mt-5 flex flex-wrap justify-between gap-3 text-sm">
             <Link href="/forgot-password" className="font-medium text-primary hover:underline">

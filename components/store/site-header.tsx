@@ -13,6 +13,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { BRAND } from "@/lib/brand";
 import { getCartItemCount, useCartStore } from "@/lib/cart-store";
 import type { Category } from "@/lib/data/types";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Container } from "@/components/ui/container";
 
 interface SiteHeaderProps {
@@ -174,13 +175,13 @@ export function SiteHeader({
                     </Link>
                   ) : null}
                   <form action={signOut}>
-                    <button
-                      type="submit"
+                    <SubmitButton
+                      pendingLabel="Signing out…"
                       onClick={() => setAccountMenuOpen(false)}
                       className="w-full rounded-lg px-3 py-2.5 text-left text-sm hover:bg-background"
                     >
                       Sign out
-                    </button>
+                    </SubmitButton>
                   </form>
                 </div>
               </div>
