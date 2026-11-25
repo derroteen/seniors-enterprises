@@ -15,6 +15,7 @@ import { ProductForm } from "@/components/admin/product-form";
 import { ProductsPanel } from "@/components/admin/products-panel";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { StatusBadge, StatusMessage } from "@/components/ui/status-message";
 import type { Category, Order, OrderStatus, Product } from "@/lib/data/types";
 import { formatKes } from "@/lib/store-format";
@@ -114,6 +115,9 @@ export function AdminDashboard({
   const [formMessage, setFormMessage] = useState("");
   const [orderError, setOrderError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [savingCategory, setSavingCategory] = useState(false);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [updatingOrderNumber, setUpdatingOrderNumber] = useState<string | null>(null);
 
   const todayOrders = useMemo(() => getTodayOrders(orders), [orders]);
   const todayRevenue = todayOrders
@@ -169,6 +173,7 @@ export function AdminDashboard({
       return;
     }
 
+    setSavingCategory(true);
     startTransition(async () => {
       try {
         await saveCategoryAction({
@@ -184,6 +189,8 @@ export function AdminDashboard({
         router.refresh();
       } catch (error) {
         setFormError(showError(error, "Category could not be saved."));
+      } finally {
+        setSavingCategory(false);
       }
     });
   }
@@ -193,6 +200,7 @@ export function AdminDashboard({
       return;
     }
 
+    setDeletingProductId(product.id);
     startTransition(async () => {
       try {
         await deleteProductAction(product.id);
@@ -204,12 +212,15 @@ export function AdminDashboard({
         router.refresh();
       } catch (error) {
         setFormError(showError(error, "Product could not be deleted."));
+      } finally {
+        setDeletingProductId(null);
       }
     });
   }
 
   function changeOrderStatus(orderNumber: string, status: OrderStatus) {
     setOrderError("");
+    setUpdatingOrderNumber(orderNumber);
     startTransition(async () => {
       try {
         await updateOrderStatusAction(orderNumber, status);
@@ -217,6 +228,8 @@ export function AdminDashboard({
       } catch (error) {
         setOrderError(showError(error, "Order status could not be changed."));
         router.refresh();
+      } finally {
+        setUpdatingOrderNumber(null);
       }
     });
   }
@@ -236,9 +249,9 @@ export function AdminDashboard({
               View storefront
             </Link>
             <form action={logoutAdmin}>
-              <button type="submit" className={secondaryButtonClass}>
+              <SubmitButton pendingLabel="Logging out…" className={secondaryButtonClass}>
                 Log out
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>
@@ -307,6 +320,7 @@ export function AdminDashboard({
               products={catalog.products}
               categories={catalog.categories}
               isPending={isPending}
+              deletingProductId={deletingProductId}
               onEditProduct={startProductEdit}
               onDeleteProduct={removeProduct}
             />
@@ -341,9 +355,14 @@ export function AdminDashboard({
                 />
               </AdminField>
               <div className="flex flex-wrap gap-2">
-                <button type="submit" disabled={isPending} className={primaryButtonClass}>
+                <SubmitButton
+                  pending={savingCategory}
+                  pendingLabel="Saving…"
+                  disabled={isPending}
+                  className={primaryButtonClass}
+                >
                   {editingCategoryId ? "Save category" : "Create category"}
-                </button>
+                </SubmitButton>
                 {editingCategoryId ? (
                   <button
                     type="button"
@@ -427,6 +446,9 @@ export function AdminDashboard({
                         <option key={status} value={status}>{status}</option>
                       ))}
                     </select>
+                    {updatingOrderNumber === order.order_number ? (
+                      <span className="text-xs text-muted-foreground">Updating…</span>
+                    ) : null}
                   </label>
                 </div>
                 <details

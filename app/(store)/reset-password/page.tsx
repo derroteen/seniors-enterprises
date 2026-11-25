@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { updatePassword } from "@/app/(store)/auth/actions";
 import { Container } from "@/components/ui/container";
 import { redirect } from "next/navigation";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { StatusMessage } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
@@ -67,12 +68,12 @@ export default async function ResetPasswordPage({
                 className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
               />
             </label>
-            <button
-              type="submit"
-              className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            <SubmitButton
+              pendingLabel="Update password"
+              className="min-h-12 justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
               Update password
-            </button>
+            </SubmitButton>
           </form>
         </section>
       </Container>

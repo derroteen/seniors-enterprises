@@ -7,6 +7,7 @@ import {
   deleteProductImage,
   reorderProductImages,
 } from "@/app/admin/actions";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { StatusMessage } from "@/components/ui/status-message";
 import { prepareProductImage } from "@/lib/admin/images";
 import type { ProductImage } from "@/lib/data/types";
@@ -291,14 +292,16 @@ export function ProductPhotos({
                 >
                   →
                 </button>
-                <button
+                <SubmitButton
                   type="button"
                   disabled={busyImageId !== null}
+                  pending={busyImageId === image.id}
+                  pendingLabel="Deleting…"
                   onClick={() => void removeImage(image)}
-                  className="min-h-9 rounded-md border border-danger-border px-2 text-xs font-medium text-danger hover:bg-danger-bg disabled:opacity-60"
+                  className="min-h-9 justify-center rounded-md border border-danger-border px-2 text-xs font-medium text-danger hover:bg-danger-bg disabled:opacity-60"
                 >
                   Remove
-                </button>
+                </SubmitButton>
               </div>
             </li>
           ))}
@@ -377,14 +380,16 @@ export function ProductPhotos({
                   >
                     Remove
                   </button>
-                  {productId && photo.status !== "uploading" ? (
-                    <button
+                  {productId ? (
+                    <SubmitButton
                       type="button"
+                      pending={photo.status === "uploading"}
+                      pendingLabel="Uploading…"
                       onClick={() => onUploadPhoto(photo)}
-                      className="min-h-9 rounded-md bg-primary px-2 text-xs font-semibold text-primary-foreground hover:opacity-90"
+                      className="min-h-9 justify-center rounded-md bg-primary px-2 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
                     >
                       {photo.status === "error" ? "Retry" : "Upload"}
-                    </button>
+                    </SubmitButton>
                   ) : null}
                 </div>
               </div>

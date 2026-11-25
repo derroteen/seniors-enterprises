@@ -8,6 +8,7 @@ import {
   sortVariantsForStock,
   type ProductListItem,
 } from "@/lib/admin/stock";
+import { SubmitButton } from "@/components/ui/submit-button";
 import type { Category, Product } from "@/lib/data/types";
 import { formatKes } from "@/lib/store-format";
 
@@ -15,6 +16,7 @@ interface ProductsPanelProps {
   products: Product[];
   categories: Category[];
   isPending: boolean;
+  deletingProductId: string | null;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (product: Product) => void;
 }
@@ -72,11 +74,13 @@ function ProductStockGrid({ product }: { product: Product }) {
 function ProductRow({
   item,
   isPending,
+  deletingProductId,
   onEditProduct,
   onDeleteProduct,
 }: {
   item: ProductListItem;
   isPending: boolean;
+  deletingProductId: string | null;
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (product: Product) => void;
 }) {
@@ -145,14 +149,16 @@ function ProductRow({
             >
               Edit product
             </button>
-            <button
+            <SubmitButton
               type="button"
               disabled={isPending}
+              pending={deletingProductId === product.id}
+              pendingLabel="Deleting…"
               onClick={() => onDeleteProduct(product)}
               className={dangerButtonClass}
             >
               Delete
-            </button>
+            </SubmitButton>
           </div>
         </div>
       ) : null}
@@ -164,6 +170,7 @@ export function ProductsPanel({
   products,
   categories,
   isPending,
+  deletingProductId,
   onEditProduct,
   onDeleteProduct,
 }: ProductsPanelProps) {
@@ -282,6 +289,7 @@ export function ProductsPanel({
                 key={item.product.id}
                 item={item}
                 isPending={isPending}
+                deletingProductId={deletingProductId}
                 onEditProduct={onEditProduct}
                 onDeleteProduct={onDeleteProduct}
               />

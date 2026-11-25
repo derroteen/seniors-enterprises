@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { requestPasswordReset } from "@/app/(store)/auth/actions";
 import { Container } from "@/components/ui/container";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { StatusMessage } from "@/components/ui/status-message";
 
 export const metadata: Metadata = {
@@ -54,12 +55,12 @@ export default async function ForgotPasswordPage({
                 className="min-h-11 rounded-lg border border-border bg-background px-3 text-foreground"
               />
             </label>
-            <button
-              type="submit"
-              className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            <SubmitButton
+              pendingLabel="Send reset link"
+              className="min-h-12 justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
               Send reset link
-            </button>
+            </SubmitButton>
           </form>
           <Link href="/login" className="mt-5 inline-block text-sm font-semibold text-primary hover:underline">
             Back to sign in

@@ -11,6 +11,7 @@ import {
   VariantBuilder,
   type VariantPayloadRow,
 } from "@/components/admin/variant-builder";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { StatusMessage } from "@/components/ui/status-message";
 import type { Category, Product } from "@/lib/data/types";
 
@@ -450,17 +451,13 @@ export function ProductForm({
       </div>
 
       <div className="sticky bottom-0 -mx-5 grid grid-cols-2 gap-2 border-t border-border bg-surface px-5 py-3">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100"
+        <SubmitButton
+          pending={isPending}
+          pendingLabel="Saving…"
+          className="min-h-12 justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:bg-muted-bg disabled:text-muted-foreground disabled:opacity-100"
         >
-          {isPending
-            ? "Saving…"
-            : product
-              ? "Save product"
-              : "Create product"}
-        </button>
+          {product ? "Save product" : "Create product"}
+        </SubmitButton>
         <button
           type="button"
           onClick={onCancel}
